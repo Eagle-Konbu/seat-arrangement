@@ -4,16 +4,91 @@ pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
 
+const PREV_ADJ_DISTANCE_WEIGHT: f64 = 10000.0;
+const ACCADEMIC_WEIGHT: f64 = 1000.0;
+const EXERCISE_WEIGHT: f64 = 1000.0;
+const LEADERSHIP_WEIGHT: f64 = 1000.0;
+const GENDER_WEIGHT: f64 = 1000.0;
+
+
 #[warn(overflowing_literals)]
 fn eval_func(
     previous: &SeatAssignment,
     new: &SeatAssignment,
-    students: Vec<Student>,
+    students: &[Student],
 ) -> Result<i64, Error> {
-    let (height, width, n) = (previous.len(), previous[0].len(), students.len());
+    let (depth, width, n) = (previous.len(), previous[0].len(), students.len());
 
     if let Ok(individual_scores) = individual_eval_func(previous, new, students) {
-        let score = individual_scores.iter().sum();
+        let mut score = individual_scores.iter().sum();
+
+        let (
+            mut adj_accademic_means,
+            mut adj_exercise_means,
+            mut adj_leadership_means,
+            mut adj_gender_means,
+        ) = (vec![0.0; n], vec![0.0; n], vec![0.0; n], vec![0.0; n]);
+
+        for y1 in 0..depth {
+            for x1 in 0..width {
+                let student_id = new[y1][x1];
+                if student_id == !0 {
+                    continue;
+                }
+
+                let mut student_ids_to_be_counted = vec![student_id];
+                for d in DIR {
+                    let (x2, y2) = ((x1 as i32 + d[0]), (y1 as i32 + d[1]));
+                    if x2 < 0 || x2 >= width as i32 || y2 < 0 || y2 >= depth as i32 {
+                        continue;
+                    }
+                    let adj_student_id = new[y2 as usize][x2 as usize];
+                    if adj_student_id != !0 {
+                        student_ids_to_be_counted.push(adj_student_id);
+                    }
+                }
+
+                adj_accademic_means[student_id] = student_ids_to_be_counted
+                    .iter()
+                    .map(|&id| students[id].academic_ability)
+                    .sum::<usize>() as f64
+                    / student_ids_to_be_counted.len() as f64;
+                adj_exercise_means[student_id] = student_ids_to_be_counted
+                    .iter()
+                    .map(|&id| students[id].exercise_ability)
+                    .sum::<usize>() as f64
+                    / student_ids_to_be_counted.len() as f64;
+                adj_leadership_means[student_id] = student_ids_to_be_counted
+                    .iter()
+                    .map(|&id| students[id].leadership_ability)
+                    .sum::<usize>() as f64
+                    / student_ids_to_be_counted.len() as f64;
+                adj_gender_means[student_id] = student_ids_to_be_counted
+                    .iter()
+                    .map(|&id| {
+                        if students[id].gender == Gender::Female {
+                            1
+                        } else {
+                            0
+                        }
+                    })
+                    .sum::<usize>() as f64
+                    / student_ids_to_be_counted.len() as f64;
+            }
+        }
+
+        let (accademic_deviationn, exercise_deviation, leadership_deviation, gender_deviation) = (
+            standard_deviaton(&adj_accademic_means),
+            standard_deviaton(&adj_exercise_means),
+            standard_deviaton(&adj_leadership_means),
+            standard_deviaton(&adj_gender_means),
+        );
+
+        score -= (accademic_deviationn * ACCADEMIC_WEIGHT) as i64;
+        score -= (exercise_deviation * EXERCISE_WEIGHT) as i64;
+        score -= (leadership_deviation * LEADERSHIP_WEIGHT) as i64;
+        score -= (gender_deviation * GENDER_WEIGHT) as i64;
+
         return Ok(score);
     }
 
@@ -26,7 +101,7 @@ fn eval_func(
 fn individual_eval_func(
     previous: &SeatAssignment,
     new: &SeatAssignment,
-    students: Vec<Student>,
+    students: &[Student],
 ) -> Result<Vec<i64>, Error> {
     let (depth, width, n) = (previous.len(), previous[0].len(), students.len());
 
@@ -55,7 +130,7 @@ fn individual_eval_func(
         }
     }
 
-    let mut prev_adj_distance_averages = vec![0.0; n];
+    let mut prev_adj_distance_means = vec![0.0; n];
     for i in 0..n {
         let (x1, y1) = before_after_positions[i].0;
         let mut prev_adj_student_ids = vec![];
@@ -75,7 +150,7 @@ fn individual_eval_func(
             let (x2, y2) = before_after_positions[prev_adj_student_ids[j]].0;
             sum += ((x1 as i32 - x2 as i32).abs() + (y1 as i32 - y2 as i32).abs()) as f64;
         }
-        prev_adj_distance_averages[i] = sum / prev_adj_student_ids.len() as f64;
+        prev_adj_distance_means[i] = sum / prev_adj_student_ids.len() as f64;
     }
 
     // distance between blackboard and student
@@ -89,7 +164,7 @@ fn individual_eval_func(
 
     let mut individual_scores = vec![0; n];
     for i in 0..n {
-        individual_scores[i] = (prev_adj_distance_averages[i] * 10000.0) as i64;
+        individual_scores[i] = (prev_adj_distance_means[i] * PREV_ADJ_DISTANCE_WEIGHT) as i64;
         if students[i].needs_assistance {
             let distance_penalty = blackboard_distances[i].exp() as i64;
             individual_scores[i] -= distance_penalty;
@@ -97,6 +172,17 @@ fn individual_eval_func(
     }
 
     Ok(individual_scores)
+}
+
+fn mean(values: &[f64]) -> f64 {
+    values.iter().sum::<f64>() / values.len() as f64
+}
+
+fn standard_deviaton(values: &[f64]) -> f64 {
+    let n = values.len() as f64;
+    let mean = mean(values);
+    let variance = values.iter().map(|&x| (x - mean).powf(2.0)).sum::<f64>() / n;
+    variance.sqrt()
 }
 
 type SeatAssignment = Vec<Vec<usize>>;
@@ -118,7 +204,7 @@ struct Student {
     name: String,
     academic_ability: usize,
     exercise_ability: usize,
-    leadership: usize,
+    leadership_ability: usize,
     needs_assistance: bool,
     gender: Gender,
 }
