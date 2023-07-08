@@ -1,7 +1,57 @@
-use std::{io::Error, vec};
+use std::{io::Error, mem::swap, thread::Thread, vec};
+
+use rand::{rngs::ThreadRng, Rng};
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
+}
+
+pub fn solve(
+    previous: &SeatAssignment,
+    students: &[Student],
+) -> Result<(SeatAssignment, i64), Error> {
+    let mut new = previous.clone();
+    Ok((new, 0))
+}
+
+fn hill_climbing(
+    previous: &SeatAssignment,
+    students: &[Student],
+    loop_cnt: usize,
+    rng: &mut ThreadRng,
+) -> Result<(SeatAssignment, i64), Error> {
+    let mut new = previous.clone();
+    let mut best_score = eval_func(previous, &new, students).unwrap();
+
+    let (depth, width, n) = (previous.len(), previous[0].len(), students.len());
+
+    for _ in 0..loop_cnt {
+        let (pos1, pos2) = (
+            (rng.gen_range(0..depth), rng.gen_range(0..width)),
+            (rng.gen_range(0..depth), rng.gen_range(0..width)),
+        );
+
+        if previous[pos1.1][pos1.0] == !0 || previous[pos2.1][pos2.0] == !0 {
+            continue;
+        }
+
+        swap_seats(&mut new, pos1, pos2);
+
+        let new_score = eval_func(previous, &new, students).unwrap();
+        if new_score > best_score {
+            best_score = new_score;
+        } else {
+            swap_seats(&mut new, pos1, pos2);
+        }
+    }
+
+    Ok((new, best_score))
+}
+
+fn swap_seats(assigment: &mut SeatAssignment, pos1: (usize, usize), pos2: (usize, usize)) {
+    let tmp = assigment[pos1.1][pos1.0];
+    assigment[pos1.1][pos1.0] = assigment[pos2.1][pos2.0];
+    assigment[pos2.1][pos2.0] = tmp;
 }
 
 const PREV_ADJ_DISTANCE_WEIGHT: f64 = 10000.0;
