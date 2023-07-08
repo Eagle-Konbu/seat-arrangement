@@ -15,7 +15,7 @@ pub fn solve(
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut rng = rand::thread_rng();
 
-    simulated_annealing(previous, students, 100000, &mut rng, 100.0, 0.0)
+    simulated_annealing(previous, students, 1000, &mut rng, 100.0, 0.0)
 }
 
 #[warn(clippy::if_same_then_else)]
