@@ -277,7 +277,7 @@ pub struct Student {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-enum Gender {
+pub enum Gender {
     Male,
     Female,
 }
