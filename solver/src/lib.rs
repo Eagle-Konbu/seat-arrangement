@@ -1,4 +1,7 @@
-use std::{io::Error, mem::swap, thread::Thread, vec};
+#![feature(test)]
+extern crate test;
+
+use std::{io::Error, vec};
 
 use rand::{rngs::ThreadRng, Rng};
 
@@ -12,9 +15,10 @@ pub fn solve(
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut rng = rand::thread_rng();
 
-    simulated_annealing(previous, students, 200000, &mut rng, 100.0, 0.0)
+    simulated_annealing(previous, students, 100000, &mut rng, 100.0, 0.0)
 }
 
+#[warn(clippy::if_same_then_else)]
 fn simulated_annealing(
     previous: &SeatAssignment,
     students: &[Student],
@@ -30,8 +34,8 @@ fn simulated_annealing(
 
     for i in 0..loop_cnt {
         let (pos1, pos2) = (
-            (rng.gen_range(0..depth), rng.gen_range(0..width)),
-            (rng.gen_range(0..depth), rng.gen_range(0..width)),
+            (rng.gen_range(0..width), rng.gen_range(0..depth)),
+            (rng.gen_range(0..width), rng.gen_range(0..depth)),
         );
 
         if previous[pos1.1][pos1.0] == !0 || previous[pos2.1][pos2.0] == !0 {
@@ -43,11 +47,8 @@ fn simulated_annealing(
         swap_seats(&mut new, pos1, pos2);
 
         if let Ok(new_score) = eval_func(previous, &new, students) {
-            let mut p = 1.0;
-            if new_score <= best_score {
-                p = (-((new_score - best_score) as f64) / temperture).exp();
-            }
-            if rng.gen_bool(p) {
+            let p = ((new_score - best_score) as f64 / temperture).exp();
+            if new_score > best_score || rng.gen_bool(p) {
                 best_score = new_score;
             } else {
                 swap_seats(&mut new, pos1, pos2);
@@ -283,11 +284,84 @@ enum Gender {
 
 #[cfg(test)]
 mod tests {
+    use rand::seq::SliceRandom;
+
     use super::*;
 
+    use test::Bencher;
+
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    fn test_sa() {
+        let mut rng = rand::thread_rng();
+
+        let (mut score_mean, mut score_sigma) = (0.0, 0.0);
+
+        let mut scores = vec![];
+        for _ in 0..100 {
+            let students = (0..30)
+                .map(|i| Student {
+                    id: i,
+                    name: format!("Student {}", i),
+                    academic_ability: rng.gen_range(1..=5),
+                    exercise_ability: rng.gen_range(1..=5),
+                    leadership_ability: rng.gen_range(1..=5),
+                    needs_assistance: rng.gen_bool(0.5),
+                    gender: if rng.gen_bool(0.5) {
+                        Gender::Male
+                    } else {
+                        Gender::Female
+                    },
+                })
+                .collect::<Vec<Student>>();
+
+            let mut seat_assignment = vec![vec![!0; 6]; 5];
+            let mut student_ids = (0..30).collect::<Vec<usize>>();
+            student_ids.shuffle(&mut rng);
+            for i in 0..30 {
+                let (x, y) = (i % 6, i / 6);
+                seat_assignment[y][x] = student_ids[i];
+            }
+
+            let res = solve(&seat_assignment, &students);
+            assert!(res.is_ok());
+
+            scores.push(res.unwrap().1 as f64);
+        }
+
+        score_mean = mean(&scores);
+        score_sigma = standard_deviation(&scores);
+
+        println!("Mean: {}", score_mean);
+        println!("Sigma: {}", score_sigma);
+    }
+
+    #[bench]
+    fn bench_solve(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let students = (0..30)
+            .map(|i| Student {
+                id: i,
+                name: format!("Student {}", i),
+                academic_ability: rng.gen_range(1..=5),
+                exercise_ability: rng.gen_range(1..=5),
+                leadership_ability: rng.gen_range(1..=5),
+                needs_assistance: rng.gen_bool(0.5),
+                gender: if rng.gen_bool(0.5) {
+                    Gender::Male
+                } else {
+                    Gender::Female
+                },
+            })
+            .collect::<Vec<Student>>();
+
+        let mut seat_assignment = vec![vec![!0; 6]; 5];
+        let mut student_ids = (0..30).collect::<Vec<usize>>();
+        student_ids.shuffle(&mut rng);
+        for i in 0..30 {
+            let (x, y) = (i % 6, i / 6);
+            seat_assignment[y][x] = student_ids[i];
+        }
+
+        b.iter(|| solve(&seat_assignment, &students))
     }
 }
