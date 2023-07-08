@@ -12,21 +12,23 @@ pub fn solve(
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut rng = rand::thread_rng();
 
-    hill_climbing(previous, students, 200000, &mut rng)
+    simulated_annealing(previous, students, 200000, &mut rng, 100.0, 0.0)
 }
 
-fn hill_climbing(
+fn simulated_annealing(
     previous: &SeatAssignment,
     students: &[Student],
     loop_cnt: usize,
     rng: &mut ThreadRng,
+    temperture1: f64,
+    temperture2: f64,
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut new = previous.clone();
     let mut best_score = eval_func(previous, &new, students).unwrap();
 
-    let (depth, width, n) = (previous.len(), previous[0].len(), students.len());
+    let (depth, width) = (previous.len(), previous[0].len());
 
-    for _ in 0..loop_cnt {
+    for i in 0..loop_cnt {
         let (pos1, pos2) = (
             (rng.gen_range(0..depth), rng.gen_range(0..width)),
             (rng.gen_range(0..depth), rng.gen_range(0..width)),
@@ -36,10 +38,16 @@ fn hill_climbing(
             continue;
         }
 
+        let temperture = temperture1 + (temperture2 - temperture1) * i as f64 / loop_cnt as f64;
+
         swap_seats(&mut new, pos1, pos2);
 
         if let Ok(new_score) = eval_func(previous, &new, students) {
-            if new_score > best_score {
+            let mut p = 1.0;
+            if new_score <= best_score {
+                p = (-((new_score - best_score) as f64) / temperture).exp();
+            }
+            if rng.gen_bool(p) {
                 best_score = new_score;
             } else {
                 swap_seats(&mut new, pos1, pos2);
