@@ -10,7 +10,6 @@ const EXERCISE_WEIGHT: f64 = 1000.0;
 const LEADERSHIP_WEIGHT: f64 = 1000.0;
 const GENDER_WEIGHT: f64 = 1000.0;
 
-
 #[warn(overflowing_literals)]
 fn eval_func(
     previous: &SeatAssignment,
