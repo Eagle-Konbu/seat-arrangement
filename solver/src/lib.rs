@@ -18,7 +18,6 @@ pub fn solve(
     simulated_annealing(previous, students, 1000, &mut rng, 100.0, 0.0)
 }
 
-#[warn(clippy::if_same_then_else)]
 fn simulated_annealing(
     previous: &SeatAssignment,
     students: &[Student],
