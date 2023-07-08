@@ -10,8 +10,9 @@ pub fn solve(
     previous: &SeatAssignment,
     students: &[Student],
 ) -> Result<(SeatAssignment, i64), Error> {
-    let mut new = previous.clone();
-    Ok((new, 0))
+    let mut rng = rand::thread_rng();
+
+    hill_climbing(previous, students, 200000, &mut rng)
 }
 
 fn hill_climbing(
@@ -37,11 +38,18 @@ fn hill_climbing(
 
         swap_seats(&mut new, pos1, pos2);
 
-        let new_score = eval_func(previous, &new, students).unwrap();
-        if new_score > best_score {
-            best_score = new_score;
+        if let Ok(new_score) = eval_func(previous, &new, students) {
+            if new_score > best_score {
+                best_score = new_score;
+            } else {
+                swap_seats(&mut new, pos1, pos2);
+            }
         } else {
             swap_seats(&mut new, pos1, pos2);
+            return Err(Error::new(
+                std::io::ErrorKind::Other,
+                "eval_func() returned an error",
+            ));
         }
     }
 
