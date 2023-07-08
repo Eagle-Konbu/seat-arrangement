@@ -1,4 +1,4 @@
-use std::io::Error;
+use std::{io::Error, vec};
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
@@ -77,10 +77,10 @@ fn eval_func(
         }
 
         let (accademic_deviationn, exercise_deviation, leadership_deviation, gender_deviation) = (
-            standard_deviaton(&adj_accademic_means),
-            standard_deviaton(&adj_exercise_means),
-            standard_deviaton(&adj_leadership_means),
-            standard_deviaton(&adj_gender_means),
+            standard_deviation(&adj_accademic_means),
+            standard_deviation(&adj_exercise_means),
+            standard_deviation(&adj_leadership_means),
+            standard_deviation(&adj_gender_means),
         );
 
         score -= (accademic_deviationn * ACCADEMIC_WEIGHT) as i64;
@@ -97,6 +97,7 @@ fn eval_func(
     ))
 }
 
+#[warn(overflowing_literals)]
 fn individual_eval_func(
     previous: &SeatAssignment,
     new: &SeatAssignment,
@@ -177,7 +178,7 @@ fn mean(values: &[f64]) -> f64 {
     values.iter().sum::<f64>() / values.len() as f64
 }
 
-fn standard_deviaton(values: &[f64]) -> f64 {
+fn standard_deviation(values: &[f64]) -> f64 {
     let n = values.len() as f64;
     let mean = mean(values);
     let variance = values.iter().map(|&x| (x - mean).powf(2.0)).sum::<f64>() / n;
@@ -198,7 +199,7 @@ const DIR: [[i32; 2]; 8] = [
 
 // id must be unique and 0-indexed
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct Student {
+pub struct Student {
     id: usize,
     name: String,
     academic_ability: usize,
