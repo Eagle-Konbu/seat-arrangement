@@ -68,7 +68,7 @@ fn swap_seats(assigment: &mut SeatAssignment, pos1: (usize, usize), pos2: (usize
     assigment[pos2.1][pos2.0] = tmp;
 }
 
-const PREV_ADJ_DISTANCE_WEIGHT: f64 = 10000.0;
+const PREV_ADJ_DISTANCE_WEIGHT: f64 = 1000.0;
 const BLACKBOARD_DISTANCE_WEIGHT: f64 = 1000.0;
 const ACADEMIC_WEIGHT: f64 = 1000.0;
 const EXERCISE_WEIGHT: f64 = 1000.0;
@@ -85,7 +85,7 @@ fn eval_func(
     let (depth, width, n) = (previous.len(), previous[0].len(), students.len());
 
     if let Ok(individual_scores) = individual_eval_func(previous, new, students) {
-        let mut score = individual_scores.iter().sum();
+        let mut score = (individual_scores.iter().sum::<i64>() as f64 / n as f64) as i64;
 
         let group = (0..depth)
             .map(|y| {
@@ -362,7 +362,7 @@ mod tests {
                     .iter()
                     .sum::<i64>() as f64;
             scores.push(res.unwrap().1 as f64);
-            individual_scores.push(individual_score_sum);
+            individual_scores.push(individual_score_sum as f64 / students.len() as f64);
         }
 
         score_mean = mean(&scores);
