@@ -5,15 +5,13 @@ use std::{io::Error, vec};
 
 use rand::{rngs::ThreadRng, Rng};
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
 pub fn solve(
     previous: &SeatAssignment,
     students: &[Student],
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut rng = rand::thread_rng();
+
+    let mut init_solution = previous.clone();
 
     simulated_annealing(previous, students, 10000, &mut rng, 500.0, 0.0)
 }
@@ -71,6 +69,7 @@ fn swap_seats(assigment: &mut SeatAssignment, pos1: (usize, usize), pos2: (usize
 }
 
 const PREV_ADJ_DISTANCE_WEIGHT: f64 = 10000.0;
+const BLACKBOARD_DISTANCE_WEIGHT: f64 = 1000.0;
 const ACADEMIC_WEIGHT: f64 = 1000.0;
 const EXERCISE_WEIGHT: f64 = 1000.0;
 const LEADERSHIP_WEIGHT: f64 = 1000.0;
@@ -233,10 +232,10 @@ fn individual_eval_func(
 
     let mut prev_adj_distance_means = vec![0.0; n];
     for i in 0..n {
-        let (x1, y1) = before_after_positions[i].0;
+        let (x_prev, y_prev) = before_after_positions[i].0;
         let mut prev_adj_student_ids = vec![];
         for d in DIR {
-            let (x, y) = ((x1 as i32 + d[0]), (y1 as i32 + d[1]));
+            let (x, y) = ((x_prev as i32 + d[0]), (y_prev as i32 + d[1]));
             if x < 0 || x >= width as i32 || y < 0 || y >= depth as i32 {
                 continue;
             }
@@ -245,6 +244,8 @@ fn individual_eval_func(
                 prev_adj_student_ids.push(adj_student_id);
             }
         }
+
+        let (x1, y1) = before_after_positions[i].1;
 
         let mut sum = 0.0;
         for j in 0..prev_adj_student_ids.len() {
@@ -267,7 +268,7 @@ fn individual_eval_func(
     for i in 0..n {
         individual_scores[i] = (prev_adj_distance_means[i] * PREV_ADJ_DISTANCE_WEIGHT) as i64;
         if students[i].needs_assistance {
-            let distance_penalty = blackboard_distances[i].exp() as i64;
+            let distance_penalty = (blackboard_distances[i] * BLACKBOARD_DISTANCE_WEIGHT) as i64;
             individual_scores[i] -= distance_penalty;
         }
     }
@@ -331,6 +332,7 @@ mod tests {
         let (mut score_mean, mut score_sigma) = (0.0, 0.0);
 
         let mut scores = vec![];
+        let mut individual_scores = vec![];
         for _ in 0..100 {
             let students = (0..30)
                 .map(|i| Student {
@@ -339,12 +341,8 @@ mod tests {
                     academic_ability: rng.gen_range(1..=5),
                     exercise_ability: rng.gen_range(1..=5),
                     leadership_ability: rng.gen_range(1..=5),
-                    needs_assistance: rng.gen_bool(0.1),
-                    gender: if rng.gen_bool(0.5) {
-                        Gender::Male
-                    } else {
-                        Gender::Female
-                    },
+                    needs_assistance: i < 3,
+                    gender: if i < 15 { Gender::Male } else { Gender::Female },
                 })
                 .collect::<Vec<Student>>();
 
@@ -358,8 +356,13 @@ mod tests {
 
             let res = solve(&seat_assignment, &students);
             assert!(res.is_ok());
-
+            let individual_score_sum =
+                individual_eval_func(&seat_assignment, &res.as_ref().unwrap().0, &students)
+                    .unwrap()
+                    .iter()
+                    .sum::<i64>() as f64;
             scores.push(res.unwrap().1 as f64);
+            individual_scores.push(individual_score_sum);
         }
 
         score_mean = mean(&scores);
@@ -367,6 +370,7 @@ mod tests {
 
         println!("Mean: {}", score_mean);
         println!("Sigma: {}", score_sigma);
+        println!("Mean(only individual): {}", mean(&individual_scores));
     }
 
     #[bench]
