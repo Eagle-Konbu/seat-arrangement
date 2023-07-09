@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use solver::Student;
+use tauri::{AppHandle, WindowBuilder, WindowUrl};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -98,9 +99,33 @@ fn solve(
     Ok((new_seat_assignment, score))
 }
 
+#[tauri::command]
+fn open_seats_edit_window(app: AppHandle, width: usize, depth: usize) -> Result<(), String> {
+    let res = WindowBuilder::new(
+        &app,
+        "seats_layout",
+        WindowUrl::App(format!("edit_layout?width={}&depth={}", width, depth).into()),
+    )
+    .title("Seats Layout")
+    .resizable(true)
+    .fullscreen(false)
+    .build();
+
+    println!("width: {}, depth: {}", width, depth);
+
+    match res {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Error opening window: {:?}", e)),
+    }
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet, solve])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            solve,
+            open_seats_edit_window
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
