@@ -11,8 +11,6 @@ pub fn solve(
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut rng = rand::thread_rng();
 
-    let mut init_solution = previous.clone();
-
     simulated_annealing(previous, students, 10000, &mut rng, 500.0, 0.0)
 }
 
@@ -300,7 +298,7 @@ const DIR: [[i32; 2]; 8] = [
 ];
 
 // id must be unique and 0-indexed
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Student {
     id: usize,
     name: String,
@@ -311,7 +309,7 @@ pub struct Student {
     gender: Gender,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Gender {
     Male,
     Female,
