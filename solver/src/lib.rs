@@ -15,7 +15,7 @@ pub fn solve(
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut rng = rand::thread_rng();
 
-    simulated_annealing(previous, students, 1000, &mut rng, 100.0, 0.0)
+    simulated_annealing(previous, students, 10000, &mut rng, 500.0, 0.0)
 }
 
 fn simulated_annealing(
@@ -174,26 +174,15 @@ fn eval_func(
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
-        let (gender_gap_min, gender_gap_max) = (
-            adj_gender_means
-                .iter()
-                .min_by(|&&x, &&y| {
-                    (x - male_female_rate)
-                        .abs()
-                        .partial_cmp(&(y - male_female_rate).abs())
-                        .unwrap()
-                })
-                .unwrap(),
-            adj_gender_means
-                .iter()
-                .max_by(|&&x, &&y| {
-                    (x - male_female_rate)
-                        .abs()
-                        .partial_cmp(&(y - male_female_rate).abs())
-                        .unwrap()
-                })
-                .unwrap(),
-        );
+        let gender_gap_max = adj_gender_means
+            .iter()
+            .max_by(|&&x, &&y| {
+                (x - male_female_rate)
+                    .abs()
+                    .partial_cmp(&(y - male_female_rate).abs())
+                    .unwrap()
+            })
+            .unwrap();
 
         score += (ACADEMIC_WEIGHT * (academic_min / academic_max)) as i64;
         score += (EXERCISE_WEIGHT * (exercise_min / exercise_max)) as i64;
