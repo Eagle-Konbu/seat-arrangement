@@ -71,10 +71,11 @@ fn swap_seats(assigment: &mut SeatAssignment, pos1: (usize, usize), pos2: (usize
 }
 
 const PREV_ADJ_DISTANCE_WEIGHT: f64 = 10000.0;
-const ACCADEMIC_WEIGHT: f64 = 1000.0;
+const ACADEMIC_WEIGHT: f64 = 1000.0;
 const EXERCISE_WEIGHT: f64 = 1000.0;
 const LEADERSHIP_WEIGHT: f64 = 1000.0;
 const GENDER_WEIGHT: f64 = 1000.0;
+const GROUP_SIZE: usize = 3;
 
 #[warn(overflowing_literals)]
 fn eval_func(
@@ -87,72 +88,117 @@ fn eval_func(
     if let Ok(individual_scores) = individual_eval_func(previous, new, students) {
         let mut score = individual_scores.iter().sum();
 
+        let group = (0..depth)
+            .map(|y| {
+                (0..width)
+                    .map(|x| {
+                        x / GROUP_SIZE
+                            + (y / GROUP_SIZE) * (width as f64 / GROUP_SIZE as f64).ceil() as usize
+                    })
+                    .collect::<Vec<usize>>()
+            })
+            .collect::<Vec<Vec<usize>>>();
+        let group_cnt = (width as f64 / GROUP_SIZE as f64).ceil() as usize
+            * (depth as f64 / GROUP_SIZE as f64).ceil() as usize;
+
         let (
-            mut adj_accademic_means,
+            mut adj_academic_means,
             mut adj_exercise_means,
             mut adj_leadership_means,
             mut adj_gender_means,
-        ) = (vec![0.0; n], vec![0.0; n], vec![0.0; n], vec![0.0; n]);
+        ) = (
+            vec![0.0; group_cnt],
+            vec![0.0; group_cnt],
+            vec![0.0; group_cnt],
+            vec![0.0; group_cnt],
+        );
 
-        for y1 in 0..depth {
-            for x1 in 0..width {
-                let student_id = new[y1][x1];
-                if student_id == !0 {
+        let mut group_member_cnts = vec![0; group_cnt];
+        let mut male_female_rate = 0.0;
+        for x in 0..width {
+            for y in 0..depth {
+                if new[y][x] == !0 {
                     continue;
                 }
 
-                let mut student_ids_to_be_counted = vec![student_id];
-                for d in DIR {
-                    let (x2, y2) = ((x1 as i32 + d[0]), (y1 as i32 + d[1]));
-                    if x2 < 0 || x2 >= width as i32 || y2 < 0 || y2 >= depth as i32 {
-                        continue;
-                    }
-                    let adj_student_id = new[y2 as usize][x2 as usize];
-                    if adj_student_id != !0 {
-                        student_ids_to_be_counted.push(adj_student_id);
-                    }
-                }
+                adj_academic_means[group[y][x]] += students[new[y][x]].academic_ability as f64;
+                adj_exercise_means[group[y][x]] += students[new[y][x]].exercise_ability as f64;
+                adj_leadership_means[group[y][x]] += students[new[y][x]].leadership_ability as f64;
+                adj_gender_means[group[y][x]] += if students[new[y][x]].gender == Gender::Male {
+                    1.0
+                } else {
+                    0.0
+                };
 
-                adj_accademic_means[student_id] = student_ids_to_be_counted
-                    .iter()
-                    .map(|&id| students[id].academic_ability)
-                    .sum::<usize>() as f64
-                    / student_ids_to_be_counted.len() as f64;
-                adj_exercise_means[student_id] = student_ids_to_be_counted
-                    .iter()
-                    .map(|&id| students[id].exercise_ability)
-                    .sum::<usize>() as f64
-                    / student_ids_to_be_counted.len() as f64;
-                adj_leadership_means[student_id] = student_ids_to_be_counted
-                    .iter()
-                    .map(|&id| students[id].leadership_ability)
-                    .sum::<usize>() as f64
-                    / student_ids_to_be_counted.len() as f64;
-                adj_gender_means[student_id] = student_ids_to_be_counted
-                    .iter()
-                    .map(|&id| {
-                        if students[id].gender == Gender::Female {
-                            1
-                        } else {
-                            0
-                        }
-                    })
-                    .sum::<usize>() as f64
-                    / student_ids_to_be_counted.len() as f64;
+                group_member_cnts[group[y][x]] += 1;
+
+                if students[new[y][x]].gender == Gender::Male {
+                    male_female_rate += 1.0 / n as f64;
+                }
             }
         }
+        for i in 0..group_cnt {
+            adj_academic_means[i] /= group_member_cnts[i] as f64;
+            adj_exercise_means[i] /= group_member_cnts[i] as f64;
+            adj_leadership_means[i] /= group_member_cnts[i] as f64;
+            adj_gender_means[i] /= group_member_cnts[i] as f64;
+        }
 
-        let (accademic_deviationn, exercise_deviation, leadership_deviation, gender_deviation) = (
-            standard_deviation(&adj_accademic_means),
-            standard_deviation(&adj_exercise_means),
-            standard_deviation(&adj_leadership_means),
-            standard_deviation(&adj_gender_means),
+        let (academic_min, academic_max) = (
+            adj_academic_means
+                .iter()
+                .min_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+            adj_academic_means
+                .iter()
+                .max_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+        );
+        let (exercise_min, exercise_max) = (
+            adj_exercise_means
+                .iter()
+                .min_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+            adj_exercise_means
+                .iter()
+                .max_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+        );
+        let (leadership_min, leadership_max) = (
+            adj_leadership_means
+                .iter()
+                .min_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+            adj_leadership_means
+                .iter()
+                .max_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+        );
+        let (gender_gap_min, gender_gap_max) = (
+            adj_gender_means
+                .iter()
+                .min_by(|&&x, &&y| {
+                    (x - male_female_rate)
+                        .abs()
+                        .partial_cmp(&(y - male_female_rate).abs())
+                        .unwrap()
+                })
+                .unwrap(),
+            adj_gender_means
+                .iter()
+                .max_by(|&&x, &&y| {
+                    (x - male_female_rate)
+                        .abs()
+                        .partial_cmp(&(y - male_female_rate).abs())
+                        .unwrap()
+                })
+                .unwrap(),
         );
 
-        score -= (accademic_deviationn * ACCADEMIC_WEIGHT) as i64;
-        score -= (exercise_deviation * EXERCISE_WEIGHT) as i64;
-        score -= (leadership_deviation * LEADERSHIP_WEIGHT) as i64;
-        score -= (gender_deviation * GENDER_WEIGHT) as i64;
+        score += (ACADEMIC_WEIGHT * (academic_min / academic_max)) as i64;
+        score += (EXERCISE_WEIGHT * (exercise_min / exercise_max)) as i64;
+        score += (LEADERSHIP_WEIGHT * (leadership_min / leadership_max)) as i64;
+        score -= (GENDER_WEIGHT * gender_gap_max) as i64;
 
         return Ok(score);
     }
@@ -304,7 +350,7 @@ mod tests {
                     academic_ability: rng.gen_range(1..=5),
                     exercise_ability: rng.gen_range(1..=5),
                     leadership_ability: rng.gen_range(1..=5),
-                    needs_assistance: rng.gen_bool(0.5),
+                    needs_assistance: rng.gen_bool(0.1),
                     gender: if rng.gen_bool(0.5) {
                         Gender::Male
                     } else {
@@ -344,7 +390,7 @@ mod tests {
                 academic_ability: rng.gen_range(1..=5),
                 exercise_ability: rng.gen_range(1..=5),
                 leadership_ability: rng.gen_range(1..=5),
-                needs_assistance: rng.gen_bool(0.5),
+                needs_assistance: rng.gen_bool(0.1),
                 gender: if rng.gen_bool(0.5) {
                     Gender::Male
                 } else {
