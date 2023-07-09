@@ -300,7 +300,7 @@ const DIR: [[i32; 2]; 8] = [
 // id must be unique and 0-indexed
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Student {
-    id: usize,
+    pub id: usize,
     name: String,
     academic_ability: usize,
     exercise_ability: usize,
