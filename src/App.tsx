@@ -3,12 +3,14 @@ import "./App.css";
 
 import Result from "./Result";
 import EditLayout from "./EditLayout";
+import SizeConfig from "./SizeConfig";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Result />} />
+        <Route path="/" element={<SizeConfig />} />
+        <Route path="/result" element={<Result />} />
         <Route path="/edit_layout" element={<EditLayout />} />
       </Routes>
     </BrowserRouter>

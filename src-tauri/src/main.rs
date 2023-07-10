@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use solver::Student;
-use tauri::{AppHandle, WindowBuilder, WindowUrl};
+use tauri::{AppHandle, WindowBuilder, WindowUrl, Window};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -25,7 +25,7 @@ fn solve(
 }
 
 #[tauri::command]
-fn open_seats_edit_window(app: AppHandle, width: usize, depth: usize) -> Result<(), String> {
+fn open_seats_edit_window(app: AppHandle, window: Window, width: usize, depth: usize) -> Result<(), String> {
     let res = WindowBuilder::new(
         &app,
         "seats_layout",
@@ -36,10 +36,11 @@ fn open_seats_edit_window(app: AppHandle, width: usize, depth: usize) -> Result<
     .fullscreen(false)
     .build();
 
-    println!("width: {}, depth: {}", width, depth);
-
     match res {
-        Ok(_) => Ok(()),
+        Ok(_) => {
+            let _ = window.close();
+            Ok(())
+        },
         Err(e) => Err(format!("Error opening window: {:?}", e)),
     }
 }
