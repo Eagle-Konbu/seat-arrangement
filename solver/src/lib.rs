@@ -102,7 +102,7 @@ fn eval_func(
             mut adj_academic_means,
             mut adj_exercise_means,
             mut adj_leadership_means,
-            mut adj_gender_means,
+            mut adj_male_rate,
         ) = (
             vec![0.0; group_cnt],
             vec![0.0; group_cnt],
@@ -121,24 +121,20 @@ fn eval_func(
                 adj_academic_means[group[y][x]] += students[new[y][x]].academic_ability as f64;
                 adj_exercise_means[group[y][x]] += students[new[y][x]].exercise_ability as f64;
                 adj_leadership_means[group[y][x]] += students[new[y][x]].leadership_ability as f64;
-                adj_gender_means[group[y][x]] += if students[new[y][x]].gender == Gender::Male {
+                adj_male_rate[group[y][x]] += if students[new[y][x]].gender == Gender::Male {
                     1.0
                 } else {
                     0.0
                 };
 
                 group_member_cnts[group[y][x]] += 1;
-
-                if students[new[y][x]].gender == Gender::Male {
-                    male_female_rate += 1.0 / n as f64;
-                }
             }
         }
         for i in 0..group_cnt {
             adj_academic_means[i] /= group_member_cnts[i] as f64;
             adj_exercise_means[i] /= group_member_cnts[i] as f64;
             adj_leadership_means[i] /= group_member_cnts[i] as f64;
-            adj_gender_means[i] /= group_member_cnts[i] as f64;
+            adj_male_rate[i] /= group_member_cnts[i] as f64;
         }
 
         let (academic_min, academic_max) = (
@@ -171,20 +167,22 @@ fn eval_func(
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
-        let gender_gap_max = adj_gender_means
-            .iter()
-            .max_by(|&&x, &&y| {
-                (x - male_female_rate)
-                    .abs()
-                    .partial_cmp(&(y - male_female_rate).abs())
-                    .unwrap()
-            })
-            .unwrap();
+
+        let (male_rate_min, male_rate_max) = (
+            adj_male_rate
+                .iter()
+                .min_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+            adj_male_rate
+                .iter()
+                .max_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+        );
 
         score += (ACADEMIC_WEIGHT * (academic_min / academic_max)) as i64;
         score += (EXERCISE_WEIGHT * (exercise_min / exercise_max)) as i64;
         score += (LEADERSHIP_WEIGHT * (leadership_min / leadership_max)) as i64;
-        score -= (GENDER_WEIGHT * gender_gap_max) as i64;
+        score += (GENDER_WEIGHT * (male_rate_min / male_rate_max)) as i64;
 
         return Ok(score);
     }
