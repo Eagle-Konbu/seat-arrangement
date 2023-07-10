@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useSearchParams } from "react-router-dom";
-import { Card, Grid } from "@mui/material";
+import { Card, CardContent, Grid, Typography } from "@mui/material";
 
 function EditLayout() {
 
@@ -18,8 +18,12 @@ function EditLayout() {
           for (let i = 0; i < width * depth; i++) {
             elements.push(
               <Grid item xs={1}>
-                <Card>
-                  aaa
+                <Card variant="outlined">
+                  <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <Typography>
+                      1. 田中 太郎
+                    </Typography>
+                  </CardContent>
                 </Card>
               </Grid>
             );
