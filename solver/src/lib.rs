@@ -1,7 +1,11 @@
 #![feature(test)]
 extern crate test;
 
-use std::{io::Error, vec};
+use std::{
+    collections::{BinaryHeap, VecDeque},
+    io::Error,
+    vec,
+};
 
 use rand::{rngs::ThreadRng, Rng};
 
@@ -11,9 +15,73 @@ pub fn solve(
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut rng = rand::thread_rng();
 
-    let mut init_solution = previous.clone();
+    simulated_annealing(previous, students, LOOP_CNT, &mut rng, T1, T2)
+}
 
-    simulated_annealing(previous, students, 10000, &mut rng, 500.0, 0.0)
+fn beam_search(
+    previous: &SeatAssignment,
+    students: &[Student],
+    beam_width: usize,
+) -> Result<(SeatAssignment, i64), Error> {
+    let (depth, width, n) = (previous.len(), previous[0].len(), students.len());
+
+    let mut deq = VecDeque::new();
+    deq.push_back(previous.clone());
+
+    for x1 in 0..width {
+        for y1 in 0..depth {
+            if previous[y1][x1] == !0 {
+                continue;
+            }
+
+            let mut heap = BinaryHeap::new();
+            loop {
+                if deq.is_empty() {
+                    break;
+                }
+
+                let current_layout = deq.pop_front().unwrap();
+                for x2 in 0..width {
+                    for y2 in 0..depth {
+                        if current_layout[y2][x2] == !0 {
+                            continue;
+                        }
+
+                        let mut new = current_layout.clone();
+                        swap_seats(&mut new, (x1, y1), (x2, y2));
+
+                        let score = eval_func(previous, &new, students).unwrap();
+
+                        heap.push((score, new));
+                    }
+                }
+            }
+
+            for _ in 0..beam_width {
+                if let Some((_, new)) = heap.pop() {
+                    deq.push_back(new);
+                }
+            }
+        }
+    }
+
+    let mut heap = BinaryHeap::new();
+    loop {
+        if deq.is_empty() {
+            break;
+        }
+
+        let layout = deq.pop_front().unwrap();
+        let score = eval_func(previous, &layout, students).unwrap();
+
+        heap.push((score, layout));
+    }
+
+    if let Some((score, layout)) = heap.pop() {
+        return Ok((layout, score));
+    }
+
+    Err(Error::new(std::io::ErrorKind::Other, "Beam search failed."))
 }
 
 fn simulated_annealing(
@@ -75,6 +143,12 @@ const EXERCISE_WEIGHT: f64 = 1000.0;
 const LEADERSHIP_WEIGHT: f64 = 1000.0;
 const GENDER_WEIGHT: f64 = 1000.0;
 const GROUP_SIZE: usize = 3;
+
+const LOOP_CNT: usize = 10000;
+const T1: f64 = 500.0;
+const T2: f64 = 0.0;
+
+const BEAM_WIDTH: usize = 10;
 
 #[warn(overflowing_literals)]
 fn eval_func(
@@ -325,8 +399,34 @@ mod tests {
 
     use test::Bencher;
 
+    fn test_case() -> (SeatAssignment, Vec<Student>) {
+        let mut rng = rand::thread_rng();
+
+        let students = (0..30)
+            .map(|i| Student {
+                id: i,
+                name: format!("Student {}", i),
+                academic_ability: rng.gen_range(1..=5),
+                exercise_ability: rng.gen_range(1..=5),
+                leadership_ability: rng.gen_range(1..=5),
+                needs_assistance: i < 3,
+                gender: if i < 15 { Gender::Male } else { Gender::Female },
+            })
+            .collect::<Vec<Student>>();
+
+        let mut seat_assignment = vec![vec![!0; 6]; 5];
+        let mut student_ids = (0..30).collect::<Vec<usize>>();
+        student_ids.shuffle(&mut rng);
+        for i in 0..30 {
+            let (x, y) = (i % 6, i / 6);
+            seat_assignment[y][x] = student_ids[i];
+        }
+
+        (seat_assignment, students)
+    }
+
     #[test]
-    fn test_sa() {
+    fn test_simulated_annealing() {
         let mut rng = rand::thread_rng();
 
         let (mut score_mean, mut score_sigma) = (0.0, 0.0);
@@ -334,27 +434,40 @@ mod tests {
         let mut scores = vec![];
         let mut individual_scores = vec![];
         for _ in 0..100 {
-            let students = (0..30)
-                .map(|i| Student {
-                    id: i,
-                    name: format!("Student {}", i),
-                    academic_ability: rng.gen_range(1..=5),
-                    exercise_ability: rng.gen_range(1..=5),
-                    leadership_ability: rng.gen_range(1..=5),
-                    needs_assistance: i < 3,
-                    gender: if i < 15 { Gender::Male } else { Gender::Female },
-                })
-                .collect::<Vec<Student>>();
+            let (seat_assignment, students) = test_case();
 
-            let mut seat_assignment = vec![vec![!0; 6]; 5];
-            let mut student_ids = (0..30).collect::<Vec<usize>>();
-            student_ids.shuffle(&mut rng);
-            for i in 0..30 {
-                let (x, y) = (i % 6, i / 6);
-                seat_assignment[y][x] = student_ids[i];
-            }
+            // let res = solve(&seat_assignment, &students);
+            let res = simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2);
+            assert!(res.is_ok());
+            let individual_score_sum =
+                individual_eval_func(&seat_assignment, &res.as_ref().unwrap().0, &students)
+                    .unwrap()
+                    .iter()
+                    .sum::<i64>() as f64;
+            scores.push(res.unwrap().1 as f64);
+            individual_scores.push(individual_score_sum as f64 / students.len() as f64);
+        }
 
-            let res = solve(&seat_assignment, &students);
+        score_mean = mean(&scores);
+        score_sigma = standard_deviation(&scores);
+
+        println!("Mean: {}", score_mean);
+        println!("Sigma: {}", score_sigma);
+        println!("Mean(only individual): {}", mean(&individual_scores));
+    }
+
+    #[test]
+    fn test_beam_search() {
+        let (mut score_mean, mut score_sigma) = (0.0, 0.0);
+
+        let mut scores = vec![];
+        let mut individual_scores = vec![];
+        for _ in 0..100 {
+            let (seat_assignment, students) = test_case();
+
+            // let res = solve(&seat_assignment, &students);
+            // let res = simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2);
+            let res = beam_search(&seat_assignment, &students, BEAM_WIDTH);
             assert!(res.is_ok());
             let individual_score_sum =
                 individual_eval_func(&seat_assignment, &res.as_ref().unwrap().0, &students)
@@ -374,32 +487,18 @@ mod tests {
     }
 
     #[bench]
-    fn bench_solve(b: &mut Bencher) {
+    fn bench_simulated_annealing(b: &mut Bencher) {
         let mut rng = rand::thread_rng();
-        let students = (0..30)
-            .map(|i| Student {
-                id: i,
-                name: format!("Student {}", i),
-                academic_ability: rng.gen_range(1..=5),
-                exercise_ability: rng.gen_range(1..=5),
-                leadership_ability: rng.gen_range(1..=5),
-                needs_assistance: rng.gen_bool(0.1),
-                gender: if rng.gen_bool(0.5) {
-                    Gender::Male
-                } else {
-                    Gender::Female
-                },
-            })
-            .collect::<Vec<Student>>();
+        
+        let (seat_assignment, students) = test_case();
 
-        let mut seat_assignment = vec![vec![!0; 6]; 5];
-        let mut student_ids = (0..30).collect::<Vec<usize>>();
-        student_ids.shuffle(&mut rng);
-        for i in 0..30 {
-            let (x, y) = (i % 6, i / 6);
-            seat_assignment[y][x] = student_ids[i];
-        }
+        b.iter(|| simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2))
+    }
 
-        b.iter(|| solve(&seat_assignment, &students))
+    #[bench]
+    fn bench_beam_search(b: &mut Bencher) {
+        let (seat_assignment, students) = test_case();
+
+        b.iter(|| beam_search(&seat_assignment, &students, BEAM_WIDTH))
     }
 }
