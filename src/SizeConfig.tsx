@@ -5,7 +5,7 @@ import { useState } from "react";
 function SizeConfig() {
   const [width, setWidth] = useState(5);
   const [depth, setDepth] = useState(5);
-  
+
   async function openEditScreen() {
     await invoke("open_seats_edit_window", { width, depth });
   }
@@ -47,9 +47,9 @@ function SizeConfig() {
           </FormControl>
         </Grid>
         <Grid item xs={12}>
-          <Button 
+          <Button
             fullWidth
-            variant="contained" 
+            variant="contained"
             color="primary"
             onClick={openEditScreen}
           >
