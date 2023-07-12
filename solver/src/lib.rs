@@ -431,7 +431,7 @@ mod tests {
 
     #[test]
     fn test_simulated_annealing() {
-        let mut rng = rand::thread_rng();
+        let mut rng = ChaCha20Rng::seed_from_u64(123);
 
         let (mut score_mean, mut score_sigma) = (0.0, 0.0);
 
@@ -492,7 +492,7 @@ mod tests {
 
     #[bench]
     fn bench_simulated_annealing(b: &mut Bencher) {
-        let mut rng = rand::thread_rng();
+        let mut rng = ChaCha20Rng::seed_from_u64(123);
         
         let (seat_assignment, students) = test_case();
 
