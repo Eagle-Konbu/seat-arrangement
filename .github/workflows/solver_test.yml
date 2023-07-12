@@ -17,4 +17,4 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run tests
-        run: cargo test --manifest-path solver/Cargo.toml
+        run: cargo test --release --manifest-path solver/Cargo.toml
