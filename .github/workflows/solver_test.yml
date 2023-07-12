@@ -1,0 +1,22 @@
+name: Solver Test
+on:
+  pull_request:
+    paths:
+      - "solver/**"
+      - ".github/workflows/solver-test.yml"
+
+jobs:
+  test:
+    name: Run Solver Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
+        with:
+          rust-version: nightly
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Run tests
+        run: cargo test --manifest-path solver/Cargo.toml
