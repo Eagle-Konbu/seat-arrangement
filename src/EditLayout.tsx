@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useSearchParams } from "react-router-dom";
-import { Card, CardContent, Checkbox, Drawer, FormControl, Grid, Input, InputLabel, TextField, Typography } from "@mui/material";
+import { Box, Drawer, Grid, Stack, TextField, Slider, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button } from "@mui/material";
 import SeatCard from "./components/SeatCard";
-import { Slider } from "@mui/base";
 
 function EditLayout() {
 
@@ -38,48 +37,64 @@ function EditLayout() {
         anchor="right"
         open={drawerIsOpen}
       >
-        <FormControl fullWidth>
-          <InputLabel htmlFor="student_name">名前</InputLabel>
-          <Input id="student_name" />
-        </FormControl>
+        <Box padding={2}>
+          <TextField label="出席番号" type="number" defaultValue={sampleStudent.id} margin="normal" />
+          <Divider />
 
-        <FormControl fullWidth>
-          <InputLabel htmlFor="student_academic_ability">学力</InputLabel>
+          <TextField label="名前" defaultValue={sampleStudent.name} margin="normal" />
+          <Divider />
+
+          <InputLabel id="gender-select">性別</InputLabel>
+          <Select
+            labelId="gender-select"
+          >
+            <MenuItem value="Male">男</MenuItem>
+            <MenuItem value="Female">女</MenuItem>
+          </Select>
+          <Divider />
+
+          <Typography gutterBottom>学力</Typography>
           <Slider
             defaultValue={3}
             step={1}
             max={5}
             min={1}
             marks
+            valueLabelDisplay="auto"
           />
-        </FormControl>
+          <Divider />
 
-        <FormControl fullWidth>
-          <InputLabel htmlFor="student_exercise_ability">運動能力</InputLabel>
+          <Typography gutterBottom>運動能力</Typography>
           <Slider
             defaultValue={3}
             step={1}
             max={5}
             min={1}
             marks
+            valueLabelDisplay="auto"
           />
-        </FormControl>
+          <Divider />
 
-        <FormControl fullWidth>
-          <InputLabel htmlFor="student_leadership_ability">リーダーシップ</InputLabel>
+          <Typography gutterBottom>リーダーシップ</Typography>
           <Slider
             defaultValue={3}
             step={1}
             max={5}
             min={1}
             marks
+            valueLabelDisplay="auto"
           />
-        </FormControl>
+          <Divider />
 
-        <FormControl fullWidth>
-          <InputLabel htmlFor="student_needs_assistance">支援が必要</InputLabel>
-          <Checkbox id="student_needs_assistance" />
-        </FormControl>
+          <Typography gutterBottom>支援が必要</Typography>
+          <Checkbox />
+          <Divider />
+
+          <Stack direction="row" spacing={2}>
+            <Button variant="outlined" onClick={toggleDrawer}>キャンセル</Button>
+            <Button variant="contained" onClick={toggleDrawer}>保存</Button>
+          </Stack>
+        </Box>
       </Drawer>
     </div>
   );
