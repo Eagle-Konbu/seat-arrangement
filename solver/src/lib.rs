@@ -394,6 +394,7 @@ pub enum Gender {
 #[cfg(test)]
 mod tests {
     use rand::seq::SliceRandom;
+    use rand_distr::{Normal, Distribution};
 
     use super::*;
 
@@ -402,13 +403,15 @@ mod tests {
     fn test_case() -> (SeatAssignment, Vec<Student>) {
         let mut rng = rand::thread_rng();
 
+        let normal = Normal::<f64>::new(3.0, 1.0).unwrap();
+
         let students = (0..30)
             .map(|i| Student {
                 id: i,
                 name: format!("Student {}", i),
-                academic_ability: rng.gen_range(1..=5),
-                exercise_ability: rng.gen_range(1..=5),
-                leadership_ability: rng.gen_range(1..=5),
+                academic_ability: (normal.sample(&mut rng).round() as usize).max(1).min(5),
+                exercise_ability: (normal.sample(&mut rng).round() as usize).max(1).min(5),
+                leadership_ability: (normal.sample(&mut rng).round() as usize).max(1).min(5),
                 needs_assistance: i < 3,
                 gender: if i < 15 { Gender::Male } else { Gender::Female },
             })
@@ -421,6 +424,8 @@ mod tests {
             let (x, y) = (i % 6, i / 6);
             seat_assignment[y][x] = student_ids[i];
         }
+
+        println!("students: {:?}", students);
 
         (seat_assignment, students)
     }
