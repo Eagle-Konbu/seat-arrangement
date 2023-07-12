@@ -144,9 +144,9 @@ const LEADERSHIP_WEIGHT: f64 = 1000.0;
 const GENDER_WEIGHT: f64 = 1000.0;
 const GROUP_SIZE: usize = 3;
 
-const LOOP_CNT: usize = 10000;
-const T1: f64 = 500.0;
-const T2: f64 = 0.0;
+const LOOP_CNT: usize = 200000;
+const T1: f64 = 84.6;
+const T2: f64 = 0.1;
 
 const BEAM_WIDTH: usize = 10;
 
@@ -424,8 +424,6 @@ mod tests {
             let (x, y) = (i % 6, i / 6);
             seat_assignment[y][x] = student_ids[i];
         }
-
-        println!("students: {:?}", students);
 
         (seat_assignment, students)
     }
