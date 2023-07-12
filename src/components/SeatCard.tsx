@@ -1,9 +1,6 @@
 import { Card, CardActionArea, CardContent, Grid, Typography } from "@mui/material";
 
 function SeatCard(props: { student: Student, onClick: () => void }) {
-  async function openEditForm() {
-
-  }
   return (
     <Grid item xs={1}>
       <Card variant="outlined">

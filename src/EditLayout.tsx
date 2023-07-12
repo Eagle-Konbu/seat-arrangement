@@ -20,18 +20,21 @@ function EditLayout() {
   }
 
   return (
-    <div>
-      <Grid container spacing={2} columns={width}>
-        {(() => {
-          const elements = [];
-          for (let i = 0; i < width * depth; i++) {
-            elements.push(
-              <SeatCard student={sampleStudent} onClick={toggleDrawer} />
-            );
-          }
-          return elements;
-        })()}
-      </Grid>
+    <Box padding={1}>
+      <Stack spacing={2}>
+        <Grid container spacing={2} columns={width}>
+          {(() => {
+            const elements = [];
+            for (let i = 0; i < width * depth; i++) {
+              elements.push(
+                <SeatCard student={sampleStudent} onClick={toggleDrawer} />
+              );
+            }
+            return elements;
+          })()}
+        </Grid>
+        <Button fullWidth variant="contained">席替え実行</Button>
+      </Stack>
 
       <Drawer
         anchor="right"
@@ -96,7 +99,7 @@ function EditLayout() {
           </Stack>
         </Box>
       </Drawer>
-    </div>
+    </Box>
   );
 }
 
