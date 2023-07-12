@@ -7,13 +7,14 @@ use std::{
     vec,
 };
 
-use rand::{rngs::ThreadRng, Rng};
+use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha20Rng;
 
 pub fn solve(
     previous: &SeatAssignment,
     students: &[Student],
 ) -> Result<(SeatAssignment, i64), Error> {
-    let mut rng = rand::thread_rng();
+    let mut rng = ChaCha20Rng::seed_from_u64(123);
 
     simulated_annealing(previous, students, LOOP_CNT, &mut rng, T1, T2)
 }
@@ -88,7 +89,7 @@ fn simulated_annealing(
     previous: &SeatAssignment,
     students: &[Student],
     loop_cnt: usize,
-    rng: &mut ThreadRng,
+    rng: &mut ChaCha20Rng,
     temperture1: f64,
     temperture2: f64,
 ) -> Result<(SeatAssignment, i64), Error> {
@@ -145,8 +146,8 @@ const GENDER_WEIGHT: f64 = 1000.0;
 const GROUP_SIZE: usize = 3;
 
 const LOOP_CNT: usize = 200000;
-const T1: f64 = 84.6;
-const T2: f64 = 0.1;
+const T1: f64 = 119.5;
+const T2: f64 = 1.563;
 
 const BEAM_WIDTH: usize = 10;
 
