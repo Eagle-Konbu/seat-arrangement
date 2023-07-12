@@ -10,6 +10,9 @@ jobs:
     name: Run Solver Tests
     runs-on: ubuntu-latest
     steps:
+      - name: Set nightly mode
+        run: rustup override set nightly
+
       - name: Check out code
         uses: actions/checkout@v2
 
