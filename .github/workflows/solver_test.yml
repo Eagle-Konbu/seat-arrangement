@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - "solver/**"
-      - ".github/workflows/solver-test.yml"
+      - ".github/workflows/solver_test.yml"
 
 jobs:
   test:
