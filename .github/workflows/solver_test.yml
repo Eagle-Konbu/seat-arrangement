@@ -1,0 +1,20 @@
+name: Solver Test
+on:
+  pull_request:
+    paths:
+      - "solver/**"
+      - ".github/workflows/solver_test.yml"
+
+jobs:
+  test:
+    name: Run Solver Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set nightly mode
+        run: rustup override set nightly
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Run tests
+        run: cargo test --release --manifest-path solver/Cargo.toml
