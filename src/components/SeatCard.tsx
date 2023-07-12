@@ -1,13 +1,13 @@
 import { Card, CardActionArea, CardContent, Grid, Typography } from "@mui/material";
 
-function SeatCard(props: { student: Student }) {
+function SeatCard(props: { student: Student, onClick: () => void }) {
   async function openEditForm() {
 
   }
   return (
     <Grid item xs={1}>
       <Card variant="outlined">
-        <CardActionArea onClick={openEditForm}>
+        <CardActionArea onClick={props.onClick}>
           <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <Typography>
               {props.student.id}. {props.student.name}

@@ -12,7 +12,7 @@ function EditLayout() {
   const width = Number(searchParams.get("width"));
   const depth = Number(searchParams.get("depth"));
 
-  const [drawerIsOpen, setDrawerIsOpen] = useState(true);
+  const [drawerIsOpen, setDrawerIsOpen] = useState(false);
 
   const sampleStudent = { id: 1, name: "田中 太郎", academic_ability: 3, exercise_ability: 3, leadership_ability: 3, needs_assistance: false, gender: "Male" };
 
@@ -27,7 +27,7 @@ function EditLayout() {
           const elements = [];
           for (let i = 0; i < width * depth; i++) {
             elements.push(
-              <SeatCard student={sampleStudent} />
+              <SeatCard student={sampleStudent} onClick={toggleDrawer} />
             );
           }
           return elements;
