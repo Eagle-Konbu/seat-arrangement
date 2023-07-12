@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useSearchParams } from "react-router-dom";
-import { Card, CardContent, Drawer, FormControl, Grid, InputLabel, TextField, Typography } from "@mui/material";
+import { Card, CardContent, Checkbox, Drawer, FormControl, Grid, Input, InputLabel, TextField, Typography } from "@mui/material";
 import SeatCard from "./components/SeatCard";
+import { Slider } from "@mui/base";
 
 function EditLayout() {
 
@@ -38,8 +39,46 @@ function EditLayout() {
         open={drawerIsOpen}
       >
         <FormControl fullWidth>
-          <InputLabel id="student_name">名前</InputLabel>
-          <TextField id="student_name" label="名前" variant="standard" />
+          <InputLabel htmlFor="student_name">名前</InputLabel>
+          <Input id="student_name" />
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel htmlFor="student_academic_ability">学力</InputLabel>
+          <Slider
+            defaultValue={3}
+            step={1}
+            max={5}
+            min={1}
+            marks
+          />
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel htmlFor="student_exercise_ability">運動能力</InputLabel>
+          <Slider
+            defaultValue={3}
+            step={1}
+            max={5}
+            min={1}
+            marks
+          />
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel htmlFor="student_leadership_ability">リーダーシップ</InputLabel>
+          <Slider
+            defaultValue={3}
+            step={1}
+            max={5}
+            min={1}
+            marks
+          />
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel htmlFor="student_needs_assistance">支援が必要</InputLabel>
+          <Checkbox id="student_needs_assistance" />
         </FormControl>
       </Drawer>
     </div>
