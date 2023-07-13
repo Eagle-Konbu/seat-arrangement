@@ -105,7 +105,6 @@ function EditLayout() {
         anchor="right"
         open={drawerIsOpen}
         onClose={toggleDrawer}
-        elevation={0}
       >
         <Box padding={2}>
           <Stack direction="row">
@@ -118,6 +117,7 @@ function EditLayout() {
                   resetStudent(editedPosition[1], editedPosition[0]);
                   toggleDrawer();
                 }}
+                sx={{ boxShadow: 0 }}
               >
                 <RotateLeftIcon />
               </IconButton>
@@ -129,6 +129,7 @@ function EditLayout() {
             label="出席番号"
             type="number"
             margin="normal"
+            sx={{ boxShadow: 0 }}
             value={idValue}
             onChange={(e) => setIdValue(Number(e.target.value))}
           />
@@ -137,6 +138,7 @@ function EditLayout() {
           <TextField
             label="名前"
             margin="normal"
+            sx={{ boxShadow: 0 }}
             value={nameValue}
             onChange={(e) => {
               setNameValue(e.target.value);
@@ -186,7 +188,7 @@ function EditLayout() {
           <Divider />
 
           <Stack direction="row" spacing={2}>
-            <Button variant="outlined" onClick={toggleDrawer}>キャンセル</Button>
+            <Button variant="outlined" onClick={toggleDrawer} sx={{boxShadow: 0}}>キャンセル</Button>
             <Button
               variant="contained"
               onClick={() => {
