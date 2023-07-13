@@ -1,7 +1,7 @@
 {
   "build": {
     "beforeDevCommand": "yarn dev",
-    "beforeBuildCommand": "yarn build",
+    "beforeBuildCommand": "yarn build && rustup target add aarch64-apple-darwin",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
     "withGlobalTauri": false

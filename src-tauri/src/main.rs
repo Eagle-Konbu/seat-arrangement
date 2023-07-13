@@ -18,6 +18,10 @@ fn greet(name: &str) -> String {
 
 #[tauri::command]
 fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>) -> Result<ExecutionResult, String> {
+    if current_seat_assignment.iter().flatten().all(|x| x.is_none()) {
+        return Err("席が空です。".to_string());
+    }
+
     let solver_res = solver::execute(&current_seat_assignment);
 
     if solver_res.is_err() {
@@ -41,7 +45,7 @@ fn open_seats_edit_window(
 ) -> Result<(), String> {
     let res = WindowBuilder::new(
         &app,
-        "現在の席配置",
+        "current_seats",
         WindowUrl::App(format!("edit_layout?width={}&depth={}", width, depth).into()),
     )
     .title("現在の席配置")
@@ -63,7 +67,7 @@ fn open_result_window(app: AppHandle, result: ExecutionResult) -> Result<(), Str
     let json_str = serde_json::to_string(&result).unwrap();
     let res = WindowBuilder::new(
         &app,
-        "結果",
+        "result",
         WindowUrl::App(format!("result?result={}", json_str).into()),
     )
     .title("現在の席配置")
