@@ -44,6 +44,7 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          echo 'alias build="build --target universal-apple-darwin"' >> $HOME/.bashrc
 
       - name: Rust setup
         uses: dtolnay/rust-toolchain@nightly
