@@ -44,7 +44,7 @@ fn open_seats_edit_window(
         "現在の席配置",
         WindowUrl::App(format!("edit_layout?width={}&depth={}", width, depth).into()),
     )
-    .title("Seats Layout")
+    .title("現在の席配置")
     .resizable(true)
     .fullscreen(false)
     .build();
@@ -66,7 +66,7 @@ fn open_result_window(app: AppHandle, result: ExecutionResult) -> Result<(), Str
         "結果",
         WindowUrl::App(format!("result?result={}", json_str).into()),
     )
-    .title("Result")
+    .title("現在の席配置")
     .resizable(true)
     .fullscreen(false)
     .build();
