@@ -1,5 +1,7 @@
 import { Card, CardActionArea, CardContent, Grid, Tooltip, Typography } from "@mui/material";
 
+import type { Student } from "../types/Student";
+
 function SeatCard(props: { student: Student | null, onClick?: () => void }) {
   const studentInfo = (student: Student) => {
     let res = student.gender == "Male" ? "男" : "女";

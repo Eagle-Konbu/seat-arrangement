@@ -7,6 +7,8 @@ import SeatCard from "./components/SeatCard";
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import { Dna } from "react-loader-spinner";
 
+import type { Student } from "./types/Student";
+
 function EditLayout() {
   const [searchParams, _] = useSearchParams();
 
