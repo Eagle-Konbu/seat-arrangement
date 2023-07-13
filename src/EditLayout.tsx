@@ -27,6 +27,10 @@ function EditLayout() {
   const [needsAssistanceValue, setNeedsAssistanceValue] = useState(false);
 
   const [nameInputIsError, setNameInputIsError] = useState(false);
+  const [idInputIsError, setIdInputIsError] = useState(false);
+
+  const [nameInputHelperText, setNameInputHelperText] = useState("");
+  const [idInputHelperText, setIdInputHelperText] = useState("");
 
   const [seats, setSeats] = useState<(Student | null)[][]>(() => {
     const seats = [];
@@ -42,6 +46,10 @@ function EditLayout() {
 
   function toggleDrawer() {
     setDrawerIsOpen(!drawerIsOpen);
+    setNameInputHelperText("");
+    setIdInputHelperText("");
+    setNameInputIsError(false);
+    setIdInputIsError(false);
   }
 
   function setStudent(row: number, col: number, id: number, name: string, academic_ability: number, exercise_ability: number, leadership_ability: number, needs_assistance: boolean, gender: string) {
@@ -150,6 +158,8 @@ function EditLayout() {
             sx={{ boxShadow: 0 }}
             value={idValue}
             onChange={(e) => setIdValue(Number(e.target.value))}
+            error={idInputIsError}
+            helperText={idInputHelperText}
           />
           <Divider />
 
@@ -163,6 +173,7 @@ function EditLayout() {
               setNameInputIsError(false);
             }}
             error={nameInputIsError}
+            helperText={nameInputHelperText}
           />
           <Divider />
 
@@ -210,12 +221,24 @@ function EditLayout() {
             <Button
               variant="contained"
               onClick={() => {
+                let canBeSaved = true;
                 if (nameValue === "") {
                   setNameInputIsError(true);
-                  return;
+                  setNameInputHelperText("名前を入力してください。");
+                  canBeSaved = false;
                 }
-                setStudent(editedPosition[1], editedPosition[0], idValue, nameValue, academicAbilityValue, exerciseAbilityValue, leadershipAbilityValue, needsAssistanceValue, genderValue);
-                toggleDrawer();
+
+                const studentIds = seats.flat().map((student) => student?.id).filter((id) => id !== null) as number[];
+                if (studentIds.includes(idValue)) {
+                  setIdInputIsError(true);
+                  setIdInputHelperText("番号が重複しています。");
+                  canBeSaved = false;
+                }
+
+                if (canBeSaved) {
+                  setStudent(editedPosition[1], editedPosition[0], idValue, nameValue, academicAbilityValue, exerciseAbilityValue, leadershipAbilityValue, needsAssistanceValue, genderValue);
+                  toggleDrawer();
+                }
               }}
             >
               保存
