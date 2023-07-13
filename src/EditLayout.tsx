@@ -113,9 +113,11 @@ function EditLayout() {
               arrow
             >
               <IconButton
-                onClick={() => {
-                  resetStudent(editedPosition[1], editedPosition[0]);
-                  toggleDrawer();
+                onClick={async () => {
+                  if (await window.confirm("入力情報をリセットします。よろしいですか？")) {
+                    resetStudent(editedPosition[1], editedPosition[0]);
+                    toggleDrawer();
+                  }
                 }}
                 sx={{ boxShadow: 0 }}
               >
@@ -188,7 +190,7 @@ function EditLayout() {
           <Divider />
 
           <Stack direction="row" spacing={2}>
-            <Button variant="outlined" onClick={toggleDrawer} sx={{boxShadow: 0}}>キャンセル</Button>
+            <Button variant="outlined" onClick={toggleDrawer} sx={{ boxShadow: 0 }}>キャンセル</Button>
             <Button
               variant="contained"
               onClick={() => {
