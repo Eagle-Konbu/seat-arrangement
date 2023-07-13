@@ -157,7 +157,11 @@ function EditLayout() {
             margin="normal"
             sx={{ boxShadow: 0 }}
             value={idValue}
-            onChange={(e) => setIdValue(Number(e.target.value))}
+            onChange={(e) => {
+              setIdValue(Number(e.target.value));
+              setIdInputIsError(false);
+              setIdInputHelperText("");
+            }}
             error={idInputIsError}
             helperText={idInputHelperText}
           />
@@ -171,6 +175,7 @@ function EditLayout() {
             onChange={(e) => {
               setNameValue(e.target.value);
               setNameInputIsError(false);
+              setNameInputHelperText("");
             }}
             error={nameInputIsError}
             helperText={nameInputHelperText}
