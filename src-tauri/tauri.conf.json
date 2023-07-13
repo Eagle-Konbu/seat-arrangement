@@ -16,6 +16,9 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "dialog": {
+        "all": true
       }
     },
     "bundle": {
@@ -36,10 +39,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "resizable": true,
+        "resizable": false,
         "title": "seat-arrangement",
-        "width": 800,
-        "height": 600
+        "width": 200,
+        "height": 200
       }
     ]
   }

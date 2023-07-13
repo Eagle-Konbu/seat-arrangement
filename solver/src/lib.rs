@@ -2,7 +2,7 @@
 extern crate test;
 
 use std::{
-    collections::{BinaryHeap, VecDeque},
+    collections::{BinaryHeap, HashSet, VecDeque},
     io::Error,
     vec,
 };
@@ -83,6 +83,148 @@ fn beam_search(
     }
 
     Err(Error::new(std::io::ErrorKind::Other, "Beam search failed."))
+}
+
+pub fn execute(
+    current_layout: &[Vec<Option<Student>>],
+) -> Result<(Vec<Vec<Option<Student>>>, i64), Error> {
+    let check_res = check_input(current_layout);
+    if check_res.is_err() {
+        return Err(check_res.err().unwrap());
+    }
+
+    let (mut previous, mut students) = separate_input(current_layout);
+    let original_student_ids = students.iter().map(|s| s.id).collect::<Vec<usize>>();
+
+    compress_student_id(&mut students, &mut previous);
+
+    let solve_result = solve(&previous, &students);
+
+    if solve_result.is_err() {
+        return Err(solve_result.err().unwrap());
+    }
+
+    let &score = &solve_result.as_ref().unwrap().1;
+
+    let mut res = solve_result
+        .unwrap()
+        .0
+        .iter()
+        .map(|row| {
+            row.iter()
+                .map(|&idx| {
+                    if idx == !0 {
+                        None
+                    } else {
+                        Some(students[idx].clone())
+                    }
+                })
+                .collect::<Vec<Option<Student>>>()
+        })
+        .collect::<Vec<Vec<Option<Student>>>>();
+
+    for y in 0..res.len() {
+        for x in 0..res[y].len() {
+            if res[y][x].is_some() {
+                res[y][x].as_mut().unwrap().id =
+                    original_student_ids[res[y][x].as_ref().unwrap().id];
+            }
+        }
+    }
+
+    Ok((res, score))
+}
+
+fn separate_input(input: &[Vec<Option<Student>>]) -> (SeatAssignment, Vec<Student>) {
+    let idx_seat_assignment = input
+        .iter()
+        .map(|row| {
+            row.iter()
+                .map(|student| {
+                    if student.is_none() {
+                        !0
+                    } else {
+                        student.as_ref().unwrap().id
+                    }
+                })
+                .collect::<Vec<usize>>()
+        })
+        .collect::<Vec<Vec<usize>>>();
+
+    let mut students = vec![];
+    for y in 0..idx_seat_assignment.len() {
+        for x in 0..idx_seat_assignment[y].len() {
+            if idx_seat_assignment[y][x] != !0 {
+                students.push(input[y][x].as_ref().unwrap().clone());
+            }
+        }
+    }
+    students.sort_by_key(|s| s.id);
+
+    (idx_seat_assignment, students)
+}
+
+fn check_input(input: &[Vec<Option<Student>>]) -> Result<(), Error> {
+    let studnet_ids = input
+        .iter()
+        .flatten()
+        .filter(|s| s.is_some())
+        .map(|s| s.as_ref().unwrap().id)
+        .collect::<Vec<usize>>();
+
+    let mut id_set = HashSet::new();
+    let mut duplicated_ids = vec![];
+
+    for &id in studnet_ids.iter() {
+        if id_set.contains(&id) {
+            duplicated_ids.push(id);
+        }
+        id_set.insert(id);
+    }
+
+    duplicated_ids.dedup();
+    duplicated_ids.sort();
+
+    if !duplicated_ids.is_empty() {
+        return Err(Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("Duplicated student ids: {:?}", duplicated_ids),
+        ));
+    }
+
+    Ok(())
+}
+
+fn compress_student_id(students: &mut [Student], idx_layout: &mut SeatAssignment) {
+    let student_ids = students.iter().map(|s| s.id).collect::<Vec<usize>>();
+
+    let sorted_student_ids = {
+        let mut ids = student_ids.clone();
+        ids.sort();
+        ids
+    };
+
+    for student in students.iter_mut() {
+        let idx = sorted_student_ids
+            .binary_search(&student.id)
+            .expect("Student id not found in sorted ids");
+
+        student.id = idx;
+    }
+
+    students.sort_by_key(|s| s.id);
+
+    for y in 0..idx_layout.len() {
+        for x in 0..idx_layout[y].len() {
+            if idx_layout[y][x] != !0 {
+                let idx = student_ids
+                    .binary_search(&idx_layout[y][x])
+                    .expect("Student id not found in sorted ids");
+
+                idx_layout[y][x] = idx;
+            }
+        }
+    }
 }
 
 fn simulated_annealing(
@@ -178,7 +320,7 @@ fn eval_func(
             mut adj_academic_means,
             mut adj_exercise_means,
             mut adj_leadership_means,
-            mut adj_gender_means,
+            mut adj_male_rate,
         ) = (
             vec![0.0; group_cnt],
             vec![0.0; group_cnt],
@@ -197,70 +339,76 @@ fn eval_func(
                 adj_academic_means[group[y][x]] += students[new[y][x]].academic_ability as f64;
                 adj_exercise_means[group[y][x]] += students[new[y][x]].exercise_ability as f64;
                 adj_leadership_means[group[y][x]] += students[new[y][x]].leadership_ability as f64;
-                adj_gender_means[group[y][x]] += if students[new[y][x]].gender == Gender::Male {
+                adj_male_rate[group[y][x]] += if students[new[y][x]].gender == Gender::Male {
                     1.0
                 } else {
                     0.0
                 };
 
                 group_member_cnts[group[y][x]] += 1;
-
-                if students[new[y][x]].gender == Gender::Male {
-                    male_female_rate += 1.0 / n as f64;
-                }
             }
         }
         for i in 0..group_cnt {
             adj_academic_means[i] /= group_member_cnts[i] as f64;
             adj_exercise_means[i] /= group_member_cnts[i] as f64;
             adj_leadership_means[i] /= group_member_cnts[i] as f64;
-            adj_gender_means[i] /= group_member_cnts[i] as f64;
+            adj_male_rate[i] /= group_member_cnts[i] as f64;
         }
 
         let (academic_min, academic_max) = (
             adj_academic_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_academic_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
         let (exercise_min, exercise_max) = (
             adj_exercise_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_exercise_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
         let (leadership_min, leadership_max) = (
             adj_leadership_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_leadership_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
-        let gender_gap_max = adj_gender_means
-            .iter()
-            .max_by(|&&x, &&y| {
-                (x - male_female_rate)
-                    .abs()
-                    .partial_cmp(&(y - male_female_rate).abs())
-                    .unwrap()
-            })
-            .unwrap();
+
+        let (male_rate_min, male_rate_max) = (
+            adj_male_rate
+                .iter()
+                .filter(|&&x| !x.is_nan())
+                .min_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+            adj_male_rate
+                .iter()
+                .filter(|&&x| !x.is_nan())
+                .max_by(|x, y| x.partial_cmp(y).unwrap())
+                .unwrap(),
+        );
 
         score += (ACADEMIC_WEIGHT * (academic_min / academic_max)) as i64;
         score += (EXERCISE_WEIGHT * (exercise_min / exercise_max)) as i64;
         score += (LEADERSHIP_WEIGHT * (leadership_min / leadership_max)) as i64;
-        score -= (GENDER_WEIGHT * gender_gap_max) as i64;
+        score += (GENDER_WEIGHT * (male_rate_min / male_rate_max)) as i64;
 
         return Ok(score);
     }
@@ -362,9 +510,9 @@ const DIR: [[i32; 2]; 8] = [
 ];
 
 // id must be unique and 0-indexed
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Student {
-    id: usize,
+    pub id: usize,
     name: String,
     academic_ability: usize,
     exercise_ability: usize,
@@ -373,7 +521,7 @@ pub struct Student {
     gender: Gender,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Gender {
     Male,
     Female,
@@ -407,6 +555,45 @@ mod tests {
                 assert_eq!(seat_assignment[p2.1][p2.0], id1);
             }
         }
+    }
+
+    #[test]
+    fn test_compress_student_id() {
+        let mut students1 = (1..=15)
+            .map(|i| Student {
+                id: i,
+                name: format!("Student {}", i),
+                academic_ability: 3,
+                exercise_ability: 3,
+                leadership_ability: 3,
+                needs_assistance: false,
+                gender: Gender::Male,
+            })
+            .collect::<Vec<Student>>();
+        let mut layout1 = vec![vec![!0; 4]; 4];
+        for (i, student) in students1.iter().enumerate() {
+            layout1[i / 4][i % 4] = student.id;
+        }
+
+        let students1_want = (0..15)
+            .map(|i| Student {
+                id: i,
+                name: format!("Student {}", i + 1),
+                academic_ability: 3,
+                exercise_ability: 3,
+                leadership_ability: 3,
+                needs_assistance: false,
+                gender: Gender::Male,
+            })
+            .collect::<Vec<Student>>();
+        let mut layout1_want = vec![vec![!0; 4]; 4];
+        for (i, student) in students1_want.iter().enumerate() {
+            layout1_want[i / 4][i % 4] = student.id;
+        }
+
+        compress_student_id(&mut students1, &mut layout1);
+        assert_eq!(students1, students1_want);
+        assert_eq!(layout1, layout1_want);
     }
 
     #[test]
