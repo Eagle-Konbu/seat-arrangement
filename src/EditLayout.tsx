@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useSearchParams } from "react-router-dom";
-import { Box, Drawer, Grid, Stack, TextField, Slider, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip } from "@mui/material";
+import { Box, Drawer, Grid, Stack, TextField, Slider, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating } from "@mui/material";
 import SeatCard from "./components/SeatCard";
 
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
@@ -17,7 +17,6 @@ function EditLayout() {
   const [drawerIsOpen, setDrawerIsOpen] = useState(false);
 
   const [editedPosition, setEditedPosition] = useState([-1, -1]);
-  // const [editedStudent, setEditedStudent] = useState<(Student | null)>(null);
 
   const [idValue, setIdValue] = useState(0);
   const [nameValue, setNameValue] = useState("");
@@ -159,38 +158,23 @@ function EditLayout() {
           <Divider />
 
           <Typography gutterBottom>学力</Typography>
-          <Slider
-            step={1}
-            max={5}
-            min={1}
-            marks
-            valueLabelDisplay="auto"
+          <Rating
             value={academicAbilityValue}
-            onChange={(_, v) => setAcademicAbilityValue(v as number)}
+            onChange={(_, v) => setAcademicAbilityValue(v || academicAbilityValue)}
           />
           <Divider />
 
           <Typography gutterBottom>運動能力</Typography>
-          <Slider
-            step={1}
-            max={5}
-            min={1}
-            marks
-            valueLabelDisplay="auto"
+          <Rating
             value={exerciseAbilityValue}
-            onChange={(_, v) => setExerciseAbilityValue(v as number)}
+            onChange={(_, v) => setExerciseAbilityValue(v || exerciseAbilityValue)}
           />
           <Divider />
 
           <Typography gutterBottom>リーダーシップ</Typography>
-          <Slider
-            step={1}
-            max={5}
-            min={1}
-            marks
-            valueLabelDisplay="auto"
+          <Rating
             value={leadershipAbilityValue}
-            onChange={(_, v) => setLeadershipAbilityValue(v as number)}
+            onChange={(_, v) => setLeadershipAbilityValue(v || leadershipAbilityValue)}
           />
           <Divider />
 
