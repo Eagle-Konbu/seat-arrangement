@@ -2,7 +2,8 @@ import { Card, CardActionArea, CardContent, Grid, Tooltip, Typography } from "@m
 
 function SeatCard(props: { student: Student, onClick: () => void }) {
   const studentInfo = (student: Student) => {
-    let res = `学力: ${student.academic_ability} 運動能力: ${student.exercise_ability} リーダーシップ: ${student.leadership_ability}`
+    let res = student.gender == "Male" ? "男" : "女";
+    res += ` 学力: ${student.academic_ability} 運動能力: ${student.exercise_ability} リーダーシップ: ${student.leadership_ability}`
     if (student.needs_assistance) {
       res += " 要支援"
     }
