@@ -7,7 +7,7 @@ function SizeConfig() {
   const [depth, setDepth] = useState(5);
 
   async function openEditScreen() {
-    await invoke("open_seats_edit_window", { width, depth });
+    await invoke("open_seats_edit_window", { width, depth }).catch((e) => window.alert(e));
   }
 
   return (
