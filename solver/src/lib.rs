@@ -7,10 +7,14 @@ use std::{
     vec,
 };
 
-use rand::{rngs::ThreadRng, Rng};
+use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha20Rng;
 
-fn solve(previous: &SeatAssignment, students: &[Student]) -> Result<(SeatAssignment, i64), Error> {
-    let mut rng = rand::thread_rng();
+pub fn solve(
+    previous: &SeatAssignment,
+    students: &[Student],
+) -> Result<(SeatAssignment, i64), Error> {
+    let mut rng = ChaCha20Rng::seed_from_u64(123);
 
     simulated_annealing(previous, students, LOOP_CNT, &mut rng, T1, T2)
 }
@@ -231,7 +235,7 @@ fn simulated_annealing(
     previous: &SeatAssignment,
     students: &[Student],
     loop_cnt: usize,
-    rng: &mut ThreadRng,
+    rng: &mut ChaCha20Rng,
     temperture1: f64,
     temperture2: f64,
 ) -> Result<(SeatAssignment, i64), Error> {
@@ -287,13 +291,12 @@ const LEADERSHIP_WEIGHT: f64 = 1000.0;
 const GENDER_WEIGHT: f64 = 1000.0;
 const GROUP_SIZE: usize = 3;
 
-const LOOP_CNT: usize = 10000;
-const T1: f64 = 500.0;
-const T2: f64 = 0.0;
+const LOOP_CNT: usize = 200000;
+const T1: f64 = 119.5;
+const T2: f64 = 1.563;
 
 const BEAM_WIDTH: usize = 10;
 
-#[warn(overflowing_literals)]
 fn eval_func(
     previous: &SeatAssignment,
     new: &SeatAssignment,
@@ -412,7 +415,6 @@ fn eval_func(
     ))
 }
 
-#[warn(overflowing_literals)]
 fn individual_eval_func(
     previous: &SeatAssignment,
     new: &SeatAssignment,
@@ -491,17 +493,6 @@ fn individual_eval_func(
     Ok(individual_scores)
 }
 
-fn mean(values: &[f64]) -> f64 {
-    values.iter().sum::<f64>() / values.len() as f64
-}
-
-fn standard_deviation(values: &[f64]) -> f64 {
-    let n = values.len() as f64;
-    let mean = mean(values);
-    let variance = values.iter().map(|&x| (x - mean).powf(2.0)).sum::<f64>() / n;
-    variance.sqrt()
-}
-
 type SeatAssignment = Vec<Vec<usize>>;
 const DIR: [[i32; 2]; 8] = [
     [0, 1],
@@ -535,47 +526,71 @@ pub enum Gender {
 #[cfg(test)]
 mod tests {
     use rand::seq::SliceRandom;
+    use rand_distr::{Distribution, Normal};
 
     use super::*;
 
     use test::Bencher;
 
-    fn test_case() -> (SeatAssignment, Vec<Student>) {
-        let mut rng = rand::thread_rng();
+    #[test]
+    fn test_swap_seats() {
+        let mut seat_assignment = vec![vec![!0; 5]; 5];
+        for j in 0..25 {
+            let (x, y) = (j % 5, j / 5);
+            seat_assignment[y][x] = j;
+        }
+        for i in 0..25 {
+            let p1 = (i % 5, i / 5);
+            for j in 0..25 {
+                let p2 = (j % 5, j / 5);
 
-        let students = (0..30)
+                let (id1, id2) = (seat_assignment[p1.1][p1.0], seat_assignment[p2.1][p2.0]);
+                swap_seats(&mut seat_assignment, p1, p2);
+
+                assert_eq!(seat_assignment[p1.1][p1.0], id2);
+                assert_eq!(seat_assignment[p2.1][p2.0], id1);
+            }
+        }
+    }
+
+    #[test]
+    fn check_ignoreing_vacant() {
+        let students = (0..24)
             .map(|i| Student {
                 id: i,
                 name: format!("Student {}", i),
-                academic_ability: rng.gen_range(1..=5),
-                exercise_ability: rng.gen_range(1..=5),
-                leadership_ability: rng.gen_range(1..=5),
+                academic_ability: 3,
+                exercise_ability: 3,
+                leadership_ability: 3,
                 needs_assistance: i < 3,
                 gender: if i < 15 { Gender::Male } else { Gender::Female },
             })
             .collect::<Vec<Student>>();
 
-        let mut seat_assignment = vec![vec![!0; 6]; 5];
-        let mut student_ids = (0..30).collect::<Vec<usize>>();
-        student_ids.shuffle(&mut rng);
-        for i in 0..30 {
-            let (x, y) = (i % 6, i / 6);
-            seat_assignment[y][x] = student_ids[i];
+        let mut seat_assignment = vec![vec![!0; 5]; 5];
+        for j in 0..24 {
+            let (x, y) = (j % 5, j / 5);
+            seat_assignment[y][x] = j;
         }
-
-        (seat_assignment, students)
+        for i in 0..25 {
+            let (x, y) = (i % 5, i / 5);
+            swap_seats(&mut seat_assignment, (x, y), (4, 4));
+            let res = solve(&seat_assignment, &students);
+            assert!(res.is_ok());
+            swap_seats(&mut seat_assignment, (x, y), (4, 4));
+        }
     }
 
     #[test]
-    fn test_simulated_annealing() {
-        let mut rng = rand::thread_rng();
+    fn score_test_simulated_annealing() {
+        let mut rng = ChaCha20Rng::seed_from_u64(123);
 
         let (mut score_mean, mut score_sigma) = (0.0, 0.0);
 
         let mut scores = vec![];
         let mut individual_scores = vec![];
         for _ in 0..100 {
-            let (seat_assignment, students) = test_case();
+            let (seat_assignment, students) = test_case(&mut rng);
 
             // let res = solve(&seat_assignment, &students);
             let res = simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2);
@@ -598,13 +613,15 @@ mod tests {
     }
 
     #[test]
-    fn test_beam_search() {
+    fn score_test_beam_search() {
         let (mut score_mean, mut score_sigma) = (0.0, 0.0);
 
         let mut scores = vec![];
         let mut individual_scores = vec![];
+
+        let mut rng = ChaCha20Rng::seed_from_u64(123);
         for _ in 0..100 {
-            let (seat_assignment, students) = test_case();
+            let (seat_assignment, students) = test_case(&mut rng);
 
             // let res = solve(&seat_assignment, &students);
             // let res = simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2);
@@ -629,17 +646,56 @@ mod tests {
 
     #[bench]
     fn bench_simulated_annealing(b: &mut Bencher) {
-        let mut rng = rand::thread_rng();
+        let mut rng = ChaCha20Rng::seed_from_u64(123);
 
-        let (seat_assignment, students) = test_case();
+        let (seat_assignment, students) = test_case(&mut rng);
 
         b.iter(|| simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2))
     }
 
     #[bench]
     fn bench_beam_search(b: &mut Bencher) {
-        let (seat_assignment, students) = test_case();
+        let mut rng = ChaCha20Rng::seed_from_u64(123);
+
+        let (seat_assignment, students) = test_case(&mut rng);
 
         b.iter(|| beam_search(&seat_assignment, &students, BEAM_WIDTH))
+    }
+
+    fn test_case(rng: &mut ChaCha20Rng) -> (SeatAssignment, Vec<Student>) {
+        let normal = Normal::<f64>::new(3.0, 1.0).unwrap();
+
+        let students = (0..30)
+            .map(|i| Student {
+                id: i,
+                name: format!("Student {}", i),
+                academic_ability: (normal.sample(rng).round() as usize).max(1).min(5),
+                exercise_ability: (normal.sample(rng).round() as usize).max(1).min(5),
+                leadership_ability: (normal.sample(rng).round() as usize).max(1).min(5),
+                needs_assistance: i < 3,
+                gender: if i < 15 { Gender::Male } else { Gender::Female },
+            })
+            .collect::<Vec<Student>>();
+
+        let mut seat_assignment = vec![vec![!0; 6]; 5];
+        let mut student_ids = (0..30).collect::<Vec<usize>>();
+        student_ids.shuffle(rng);
+        for i in 0..30 {
+            let (x, y) = (i % 6, i / 6);
+            seat_assignment[y][x] = student_ids[i];
+        }
+
+        (seat_assignment, students)
+    }
+
+    fn mean(values: &[f64]) -> f64 {
+        values.iter().sum::<f64>() / values.len() as f64
+    }
+
+    fn standard_deviation(values: &[f64]) -> f64 {
+        let n = values.len() as f64;
+        let mean = mean(values);
+        let variance = values.iter().map(|&x| (x - mean).powf(2.0)).sum::<f64>() / n;
+        variance.sqrt()
     }
 }
