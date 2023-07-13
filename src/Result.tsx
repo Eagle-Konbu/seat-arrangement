@@ -3,6 +3,9 @@ import { Box, Grid, Stack } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 import SeatCard from "./components/SeatCard";
 
+import type { Student } from "./types/Student";
+import type { ExecutionResult } from "./types/ExecutionResult";
+
 function Result() {
   const [searchParams, _] = useSearchParams();
   const result = searchParams.get("result");
