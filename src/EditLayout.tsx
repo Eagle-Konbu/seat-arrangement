@@ -25,6 +25,8 @@ function EditLayout() {
   const [leadershipAbilityValue, setLeadershipAbilityValue] = useState(3);
   const [needsAssistanceValue, setNeedsAssistanceValue] = useState(false);
 
+  const [nameInputIsError, setNameInputIsError] = useState(false);
+
   const [seats, setSeats] = useState<(Student | null)[][]>(() => {
     const seats = [];
     for (let i = 0; i < depth; i++) {
@@ -111,7 +113,11 @@ function EditLayout() {
             label="名前"
             margin="normal"
             value={nameValue}
-            onChange={(e) => setNameValue(e.target.value)}
+            onChange={(e) => {
+              setNameValue(e.target.value);
+              setNameInputIsError(false);
+            }}
+            error={nameInputIsError}
           />
           <Divider />
 
@@ -174,6 +180,10 @@ function EditLayout() {
             <Button
               variant="contained"
               onClick={() => {
+                if (nameValue === "") {
+                  setNameInputIsError(true);
+                  return;
+                }
                 setStudent(editedPosition[1], editedPosition[0], idValue, nameValue, academicAbilityValue, exerciseAbilityValue, leadershipAbilityValue, needsAssistanceValue, genderValue);
                 toggleDrawer();
               }}
