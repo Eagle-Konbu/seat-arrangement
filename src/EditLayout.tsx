@@ -67,6 +67,7 @@ function EditLayout() {
       <Drawer
         anchor="right"
         open={drawerIsOpen}
+        onClose={toggleDrawer}
       >
         <Box padding={2}>
           <TextField label="出席番号" type="number" margin="normal" />
