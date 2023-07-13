@@ -44,7 +44,6 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           rustup target add aarch64-apple-darwin x86_64-apple-darwin
-          echo 'alias build="build --target universal-apple-darwin"' >> $HOME/.bashrc
 
       - name: Rust setup
         uses: dtolnay/rust-toolchain@nightly
@@ -58,11 +57,25 @@ jobs:
         run: |
           yarn install
 
-      - name: Build
+      - name: Build(ubuntu, windows)
+        if: matrix.platform == 'ubuntu-latest' || matrix.platform == 'windows-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tagName: 'v__VERSION__'
+          releaseName: 'Seat Arrangement (仮称) v__VERSION__'
+          releaseBody: 'See the assets to download and install this version.'
+          releaseDraft: true
+          prerelease: false
+
+      - name: Build(macos)
+        if: matrix.platform == 'macos-latest'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --target universal-apple-darwin
           tagName: 'v__VERSION__'
           releaseName: 'Seat Arrangement (仮称) v__VERSION__'
           releaseBody: 'See the assets to download and install this version.'
