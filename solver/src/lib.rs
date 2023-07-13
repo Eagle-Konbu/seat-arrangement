@@ -96,6 +96,7 @@ pub fn execute(
     let (mut previous, mut students) = separate_input(current_layout);
     let original_student_ids = students.iter().map(|s| s.id).collect::<Vec<usize>>();
 
+    eprintln!("students: {:?}", students);
     compress_student_id(&mut students, &mut previous);
 
     let solve_result = solve(&previous, &students);
@@ -160,10 +161,6 @@ fn separate_input(input: &[Vec<Option<Student>>]) -> (SeatAssignment, Vec<Studen
         }
     }
     students.sort_by_key(|s| s.id);
-
-    for i in 0..students.len() {
-        students[i].id = i;
-    }
 
     (idx_seat_assignment, students)
 }
@@ -362,30 +359,36 @@ fn eval_func(
         let (academic_min, academic_max) = (
             adj_academic_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_academic_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
         let (exercise_min, exercise_max) = (
             adj_exercise_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_exercise_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
         let (leadership_min, leadership_max) = (
             adj_leadership_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_leadership_means
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
@@ -393,10 +396,12 @@ fn eval_func(
         let (male_rate_min, male_rate_max) = (
             adj_male_rate
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_male_rate
                 .iter()
+                .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
         );
@@ -551,6 +556,45 @@ mod tests {
                 assert_eq!(seat_assignment[p2.1][p2.0], id1);
             }
         }
+    }
+
+    #[test]
+    fn test_compress_student_id() {
+        let mut students1 = (1..=15)
+            .map(|i| Student {
+                id: i,
+                name: format!("Student {}", i),
+                academic_ability: 3,
+                exercise_ability: 3,
+                leadership_ability: 3,
+                needs_assistance: false,
+                gender: Gender::Male,
+            })
+            .collect::<Vec<Student>>();
+        let mut layout1 = vec![vec![!0; 4]; 4];
+        for (i, student) in students1.iter().enumerate() {
+            layout1[i / 4][i % 4] = student.id;
+        }
+
+        let students1_want = (0..15)
+            .map(|i| Student {
+                id: i,
+                name: format!("Student {}", i + 1),
+                academic_ability: 3,
+                exercise_ability: 3,
+                leadership_ability: 3,
+                needs_assistance: false,
+                gender: Gender::Male,
+            })
+            .collect::<Vec<Student>>();
+        let mut layout1_want = vec![vec![!0; 4]; 4];
+        for (i, student) in students1_want.iter().enumerate() {
+            layout1_want[i / 4][i % 4] = student.id;
+        }
+
+        compress_student_id(&mut students1, &mut layout1);
+        assert_eq!(students1, students1_want);
+        assert_eq!(layout1, layout1_want);
     }
 
     #[test]
