@@ -1,9 +1,8 @@
 name: Solver Test
 on:
   pull_request:
-    paths:
-      - "solver/**"
-      - ".github/workflows/solver_test.yml"
+    branches:
+      - master
 
 jobs:
   test:
