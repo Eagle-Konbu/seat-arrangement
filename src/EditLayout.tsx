@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useSearchParams } from "react-router-dom";
-import { Box, Drawer, Grid, Stack, TextField, Slider, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button } from "@mui/material";
+import { Box, Drawer, Grid, Stack, TextField, Slider, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip } from "@mui/material";
 import SeatCard from "./components/SeatCard";
+
+import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 
 function EditLayout() {
   const sampleStudent = { id: 1, name: "田中 太郎", academic_ability: 3, exercise_ability: 3, leadership_ability: 3, needs_assistance: false, gender: "Male" };
@@ -46,6 +48,12 @@ function EditLayout() {
   function setStudent(row: number, col: number, id: number, name: string, academic_ability: number, exercise_ability: number, leadership_ability: number, needs_assistance: boolean, gender: string) {
     const newSeats = [...seats];
     newSeats[row][col] = { id, name, academic_ability, exercise_ability, leadership_ability, needs_assistance, gender };
+    setSeats(newSeats);
+  }
+
+  function resetStudent(row: number, col: number) {
+    const newSeats = [...seats];
+    newSeats[row][col] = null;
     setSeats(newSeats);
   }
 
@@ -98,8 +106,26 @@ function EditLayout() {
         anchor="right"
         open={drawerIsOpen}
         onClose={toggleDrawer}
+        elevation={0}
       >
         <Box padding={2}>
+          <Stack direction="row">
+            <Tooltip
+              title="リセット"
+              arrow
+            >
+              <IconButton
+                onClick={() => {
+                  resetStudent(editedPosition[1], editedPosition[0]);
+                  toggleDrawer();
+                }}
+              >
+                <RotateLeftIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
+
           <TextField
             label="出席番号"
             type="number"
