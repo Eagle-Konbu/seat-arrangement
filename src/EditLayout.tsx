@@ -15,7 +15,15 @@ function EditLayout() {
   const [drawerIsOpen, setDrawerIsOpen] = useState(false);
 
   const [editedPosition, setEditedPosition] = useState([-1, -1]);
-  const [editedStudent, setEditedStudent] = useState(sampleStudent);
+  // const [editedStudent, setEditedStudent] = useState<(Student | null)>(null);
+
+  const [idValue, setIdValue] = useState(0);
+  const [nameValue, setNameValue] = useState("");
+  const [genderValue, setGenderValue] = useState("Male");
+  const [academicAbilityValue, setAcademicAbilityValue] = useState(3);
+  const [exerciseAbilityValue, setExerciseAbilityValue] = useState(3);
+  const [leadershipAbilityValue, setLeadershipAbilityValue] = useState(3);
+  const [needsAssistanceValue, setNeedsAssistanceValue] = useState(false);
 
   const [seats, setSeats] = useState<(Student | null)[][]>(() => {
     const seats = [];
@@ -49,13 +57,33 @@ function EditLayout() {
               let x = i % width;
               let y = Math.floor(i / width);
               elements.push(
-                <SeatCard
-                  student={sampleStudent}
-                  onClick={() => {
-                    setEditedPosition([x, y]);
-                    toggleDrawer();
-                  }}
-                />
+                <Grid item xs={1}>
+                  <SeatCard
+                    student={seats[y][x]}
+                    onClick={() => {
+                      setEditedPosition([x, y]);
+                      if (seats[y][x] !== null) {
+                        setIdValue(seats[y][x]!.id);
+                        setNameValue(seats[y][x]!.name);
+                        setGenderValue(seats[y][x]!.gender);
+                        setAcademicAbilityValue(seats[y][x]!.academic_ability);
+                        setExerciseAbilityValue(seats[y][x]!.exercise_ability);
+                        setLeadershipAbilityValue(seats[y][x]!.leadership_ability);
+                        setNeedsAssistanceValue(seats[y][x]!.needs_assistance);
+                      } else {
+                        setIdValue(0);
+                        setNameValue("");
+                        setGenderValue("Male");
+                        setAcademicAbilityValue(3);
+                        setExerciseAbilityValue(3);
+                        setLeadershipAbilityValue(3);
+                        setNeedsAssistanceValue(false);
+                      }
+
+                      toggleDrawer();
+                    }}
+                  />
+                </Grid>
               );
             }
             return elements;
@@ -70,15 +98,28 @@ function EditLayout() {
         onClose={toggleDrawer}
       >
         <Box padding={2}>
-          <TextField label="出席番号" type="number" margin="normal" />
+          <TextField
+            label="出席番号"
+            type="number"
+            margin="normal"
+            value={idValue}
+            onChange={(e) => setIdValue(Number(e.target.value))}
+          />
           <Divider />
 
-          <TextField label="名前" margin="normal" />
+          <TextField
+            label="名前"
+            margin="normal"
+            value={nameValue}
+            onChange={(e) => setNameValue(e.target.value)}
+          />
           <Divider />
 
           <InputLabel id="gender-select">性別</InputLabel>
           <Select
             labelId="gender-select"
+            value={genderValue}
+            onChange={(e) => setGenderValue(e.target.value)}
           >
             <MenuItem value="Male">男</MenuItem>
             <MenuItem value="Female">女</MenuItem>
@@ -92,6 +133,8 @@ function EditLayout() {
             min={1}
             marks
             valueLabelDisplay="auto"
+            value={academicAbilityValue}
+            onChange={(_, v) => setAcademicAbilityValue(v as number)}
           />
           <Divider />
 
@@ -102,6 +145,8 @@ function EditLayout() {
             min={1}
             marks
             valueLabelDisplay="auto"
+            value={exerciseAbilityValue}
+            onChange={(_, v) => setExerciseAbilityValue(v as number)}
           />
           <Divider />
 
@@ -112,17 +157,29 @@ function EditLayout() {
             min={1}
             marks
             valueLabelDisplay="auto"
+            value={leadershipAbilityValue}
+            onChange={(_, v) => setLeadershipAbilityValue(v as number)}
           />
           <Divider />
 
-          <Typography gutterBottom>支援が必要</Typography>
+          <Typography gutterBottom>要支援</Typography>
           <Checkbox
+            checked={needsAssistanceValue}
+            onChange={(e) => setNeedsAssistanceValue(e.target.checked)}
           />
           <Divider />
 
           <Stack direction="row" spacing={2}>
             <Button variant="outlined" onClick={toggleDrawer}>キャンセル</Button>
-            <Button variant="contained" onClick={toggleDrawer}>保存</Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setStudent(editedPosition[1], editedPosition[0], idValue, nameValue, academicAbilityValue, exerciseAbilityValue, leadershipAbilityValue, needsAssistanceValue, genderValue);
+                toggleDrawer();
+              }}
+            >
+              保存
+            </Button>
           </Stack>
         </Box>
       </Drawer>
