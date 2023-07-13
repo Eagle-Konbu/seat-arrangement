@@ -96,7 +96,6 @@ pub fn execute(
     let (mut previous, mut students) = separate_input(current_layout);
     let original_student_ids = students.iter().map(|s| s.id).collect::<Vec<usize>>();
 
-    eprintln!("students: {:?}", students);
     compress_student_id(&mut students, &mut previous);
 
     let solve_result = solve(&previous, &students);

@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useSearchParams } from "react-router-dom";
-import { Box, Drawer, Grid, Stack, TextField, Slider, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
+import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
 import SeatCard from "./components/SeatCard";
 
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import { Dna } from "react-loader-spinner";
 
 function EditLayout() {
-  const sampleStudent = { id: 1, name: "田中 太郎", academic_ability: 3, exercise_ability: 3, leadership_ability: 3, needs_assistance: false, gender: "Male" };
-
   const [searchParams, _] = useSearchParams();
 
   const width = Number(searchParams.get("width"));
@@ -62,7 +60,9 @@ function EditLayout() {
     setBackdropIsOpen(true);
     invoke("solve", { currentSeatAssignment: seats })
       .then((result) => {
-        console.log(result);
+        invoke("open_result_window", { result }).catch((err) => {
+          window.alert(err);
+        });
       })
       .catch((err) => {
         window.alert(err);

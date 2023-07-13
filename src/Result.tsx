@@ -1,53 +1,56 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/tauri";
-import "./App.css";
+import { useEffect, useState } from "react";
+import { Box, Grid, Stack } from "@mui/material";
+import { useSearchParams } from "react-router-dom";
+import SeatCard from "./components/SeatCard";
 
 function Result() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const [searchParams, _] = useSearchParams();
+  const result = searchParams.get("result");
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    // setGreetMsg(await invoke("greet", { name }));
-    await invoke("open_seats_edit_window", { width: 6, depth: 5 });
-  }
+  const [width, setWidth] = useState(0);
+  const [depth, setDepth] = useState(0);
+
+  const [seats, setSeats] = useState<(Student | null)[][]>(() => {
+    const seats = [];
+    for (let i = 0; i < depth; i++) {
+      const row = [];
+      for (let j = 0; j < width; j++) {
+        row.push(null);
+      }
+      seats.push(row);
+    }
+    return seats;
+  });
+
+  useEffect(() => {
+    const resultJson = JSON.parse(result!) as ExecutionResult;
+    setWidth(resultJson.new_seat_assignment[0].length);
+    setDepth(resultJson.new_seat_assignment.length);
+    setSeats(resultJson.new_seat_assignment);
+  }, [result]);
 
   return (
-    <div className="container">
-      <h1>Welcome to Tauri!</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-
-      <p>{greetMsg}</p>
-    </div>
+    <Box padding={1}>
+      <Stack spacing={2}>
+        <Grid container spacing={2} columns={width}>
+          {(() => {
+            const elements = [];
+            for (let i = 0; i < width * depth; i++) {
+              let x = i % width;
+              let y = Math.floor(i / width);
+              elements.push(
+                <Grid item xs={1}>
+                  <SeatCard
+                    student={seats[y][x]}
+                  />
+                </Grid>
+              );
+            }
+            return elements;
+          })()}
+        </Grid>
+      </Stack>
+    </Box>
   );
 }
 
