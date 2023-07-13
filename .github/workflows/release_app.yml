@@ -7,6 +7,19 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    name: Run Solver Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Run tests
+        run: cargo test --release --manifest-path solver/Cargo.toml
+
   release:
     permissions:
       contents: write
@@ -15,6 +28,7 @@ jobs:
       matrix:
         platform: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.platform }}
+    needs: test
 
     steps:
       - name: Checkout repository
