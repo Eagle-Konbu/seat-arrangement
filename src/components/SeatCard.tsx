@@ -1,6 +1,6 @@
 import { Card, CardActionArea, CardContent, Grid, Tooltip, Typography } from "@mui/material";
 
-function SeatCard(props: { student: Student, onClick: () => void }) {
+function SeatCard(props: { student: Student | null, onClick?: () => void }) {
   const studentInfo = (student: Student) => {
     let res = student.gender == "Male" ? "男" : "女";
     res += ` 学力: ${student.academic_ability} 運動能力: ${student.exercise_ability} リーダーシップ: ${student.leadership_ability}`
@@ -9,8 +9,21 @@ function SeatCard(props: { student: Student, onClick: () => void }) {
     }
     return res;
   };
-  return (
-    <Grid item xs={1}>
+
+  if (props.student === null) {
+    return (
+      <Card variant="outlined">
+          <CardActionArea onClick={props.onClick}>
+            <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Typography>
+                未使用
+              </Typography>
+            </CardContent>
+          </CardActionArea>
+        </Card>
+    );
+  } else {
+    return (
       <Tooltip title={studentInfo(props.student)} arrow>
         <Card variant="outlined">
           <CardActionArea onClick={props.onClick}>
@@ -22,8 +35,8 @@ function SeatCard(props: { student: Student, onClick: () => void }) {
           </CardActionArea>
         </Card>
       </Tooltip>
-    </Grid>
-  );
+    );
+  }
 }
 
 export default SeatCard;
