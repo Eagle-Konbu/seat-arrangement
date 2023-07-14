@@ -1,13 +1,18 @@
 import { Button, FormControl, Grid, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import { invoke } from "@tauri-apps/api/tauri";
+import { WebviewWindow } from "@tauri-apps/api/window";
 import { useState } from "react";
 
 function SizeConfig() {
   const [width, setWidth] = useState(5);
   const [depth, setDepth] = useState(5);
 
+  const selfWindow = WebviewWindow.getByLabel("size-config")!;
+
   function openEditScreen() {
-    invoke("open_seats_edit_window", { width, depth }).catch((e) => window.alert(e));
+    invoke("open_seats_edit_window", { width, depth }).then(() => {
+      selfWindow.close();
+    }).catch((e) => window.alert(e));
   }
 
   return (

@@ -19,6 +19,10 @@
       },
       "dialog": {
         "all": true
+      },
+      "window": {
+        "all": false,
+        "close": true
       }
     },
     "bundle": {
@@ -42,7 +46,8 @@
         "resizable": false,
         "title": "seat-arrangement",
         "width": 200,
-        "height": 200
+        "height": 200,
+        "label": "size-config"
       }
     ]
   }

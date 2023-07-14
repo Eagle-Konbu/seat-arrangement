@@ -52,13 +52,7 @@ fn open_seats_edit_window(
     .build();
 
     match res {
-        Ok(_) => {
-            let close_res = window.close();
-            match close_res {
-                Ok(_) => Ok(()),
-                Err(e) => Err(format!("Error closing window: {:?}", e)),
-            }
-        }
+        Ok(_) => Ok(()),
         Err(e) => Err(format!("Error opening window: {:?}", e)),
     }
 }
