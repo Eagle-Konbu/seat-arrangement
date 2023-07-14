@@ -10,15 +10,13 @@ struct ExecutionResult {
     score: i64,
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 #[tauri::command]
 fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>) -> Result<ExecutionResult, String> {
-    if current_seat_assignment.iter().flatten().all(|x| x.is_none()) {
+    if current_seat_assignment
+        .iter()
+        .flatten()
+        .all(|x| x.is_none())
+    {
         return Err("席が空です。".to_string());
     }
 
@@ -58,9 +56,7 @@ fn open_seats_edit_window(
             let close_res = window.close();
             match close_res {
                 Ok(_) => Ok(()),
-                Err(e) => {
-                    Err(format!("Error closing window: {:?}", e))
-                }
+                Err(e) => Err(format!("Error closing window: {:?}", e)),
             }
         }
         Err(e) => Err(format!("Error opening window: {:?}", e)),
@@ -89,7 +85,6 @@ fn open_result_window(app: AppHandle, result: ExecutionResult) -> Result<(), Str
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            greet,
             solve,
             open_seats_edit_window,
             open_result_window,
