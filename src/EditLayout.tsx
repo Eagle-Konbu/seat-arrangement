@@ -3,11 +3,13 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { useSearchParams } from "react-router-dom";
 import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
 import SeatCard from "./components/SeatCard";
+import ResultDialog from "./components/ResultDialog";
 
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import { Dna } from "react-loader-spinner";
 
 import type { Student } from "./types/Student";
+import type { ExecutionResult } from "./types/ExecutionResult";
 
 function EditLayout() {
   const [searchParams, _] = useSearchParams();
@@ -34,7 +36,21 @@ function EditLayout() {
   const [nameInputHelperText, setNameInputHelperText] = useState("");
   const [idInputHelperText, setIdInputHelperText] = useState("");
 
+  const [resultIsOpen, setResultIsOpen] = useState(false);
+
   const [seats, setSeats] = useState<(Student | null)[][]>(() => {
+    const seats = [];
+    for (let i = 0; i < depth; i++) {
+      const row = [];
+      for (let j = 0; j < width; j++) {
+        row.push(null);
+      }
+      seats.push(row);
+    }
+    return seats;
+  });
+
+  const [result, setResults] = useState<(Student | null)[][]>(() => {
     const seats = [];
     for (let i = 0; i < depth; i++) {
       const row = [];
@@ -69,10 +85,10 @@ function EditLayout() {
   function solve() {
     setBackdropIsOpen(true);
     invoke("solve", { currentSeatAssignment: seats })
-      .then((result) => {
-        invoke("open_result_window", { result }).catch((err) => {
-          window.alert(err);
-        });
+      .then((res) => {
+        const executionResult = res as ExecutionResult;
+        setResults(executionResult.new_seat_assignment);
+        setResultIsOpen(true);
       })
       .catch((err) => {
         window.alert(err);
@@ -263,6 +279,14 @@ function EditLayout() {
           width={80}
         />
       </Backdrop>
+
+      <ResultDialog 
+        seats={result}
+        open={resultIsOpen}
+        onCloseClick={() => {
+          setResultIsOpen(false);
+        }}
+      />
     </Box>
   );
 }

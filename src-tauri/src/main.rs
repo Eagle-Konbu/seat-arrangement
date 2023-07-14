@@ -63,31 +63,11 @@ fn open_seats_edit_window(
     }
 }
 
-#[tauri::command]
-fn open_result_window(app: AppHandle, result: ExecutionResult) -> Result<(), String> {
-    let json_str = serde_json::to_string(&result).unwrap();
-    let res = WindowBuilder::new(
-        &app,
-        "result",
-        WindowUrl::App(format!("result?result={}", json_str).into()),
-    )
-    .title("現在の席配置")
-    .resizable(true)
-    .fullscreen(false)
-    .build();
-
-    match res {
-        Ok(_) => Ok(()),
-        Err(e) => Err(format!("Error opening window: {:?}", e)),
-    }
-}
-
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             solve,
             open_seats_edit_window,
-            open_result_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
