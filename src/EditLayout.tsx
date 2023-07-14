@@ -252,7 +252,7 @@ function EditLayout() {
                 }
 
                 const studentIds = seats.flat().map((student) => student?.id).filter((id) => id !== null) as number[];
-                if (studentIds.includes(idValue)) {
+                if (studentIds.includes(idValue) && idValue !== seats[editedPosition[1]][editedPosition[0]]?.id) {
                   setIdInputIsError(true);
                   setIdInputHelperText("番号が重複しています。");
                   canBeSaved = false;
