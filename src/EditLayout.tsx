@@ -77,8 +77,6 @@ function EditLayout() {
       }
       setSeats(seats);
       setSizeConfigIsOpen(false);
-
-      window.alert(`サイズを変更しました。${width} x ${depth}`)
     }
   }
 
