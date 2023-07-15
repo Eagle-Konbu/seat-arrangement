@@ -44,10 +44,10 @@
       {
         "fullscreen": false,
         "resizable": false,
-        "title": "seat-arrangement",
-        "width": 200,
-        "height": 200,
-        "label": "size-config"
+        "title": "現在の席順",
+        "width": 1200,
+        "height": 800,
+        "label": "current_seats"
       }
     ]
   }

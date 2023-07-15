@@ -10,12 +10,11 @@ import { Dna } from "react-loader-spinner";
 
 import type { Student } from "./types/Student";
 import type { ExecutionResult } from "./types/ExecutionResult";
+import SizeConfigDialog from "./components/SizeConfigDialog";
 
 function EditLayout() {
-  const [searchParams, _] = useSearchParams();
-
-  const width = Number(searchParams.get("width"));
-  const depth = Number(searchParams.get("depth"));
+  const [width, setWidth] = useState(5);
+  const [depth, setDepth] = useState(5);
 
   const [drawerIsOpen, setDrawerIsOpen] = useState(false);
   const [backdropIsOpen, setBackdropIsOpen] = useState(false);
@@ -36,6 +35,7 @@ function EditLayout() {
   const [nameInputHelperText, setNameInputHelperText] = useState("");
   const [idInputHelperText, setIdInputHelperText] = useState("");
 
+  const [sizeConfigIsOpen, setSizeConfigIsOpen] = useState(false);
   const [resultIsOpen, setResultIsOpen] = useState(false);
 
   const [seats, setSeats] = useState<(Student | null)[][]>(() => {
@@ -61,6 +61,24 @@ function EditLayout() {
     }
     return seats;
   });
+
+  async function ChangeSize(newWidth: number, newDepth: number) {
+    if (!await window.confirm("既に入力された情報はリセットされます。よろしいですか？")) {
+      setWidth(newWidth);
+      setDepth(newDepth);
+      setSizeConfigIsOpen(false);
+
+      const seats = [];
+      for (let i = 0; i < depth; i++) {
+        const row = [];
+        for (let j = 0; j < width; j++) {
+          row.push(null);
+        }
+        seats.push(row);
+      }
+      setSeats(seats);
+    }
+  }
 
   function toggleDrawer() {
     setDrawerIsOpen(!drawerIsOpen);
@@ -280,7 +298,14 @@ function EditLayout() {
         />
       </Backdrop>
 
-      <ResultDialog 
+      <SizeConfigDialog
+        open={sizeConfigIsOpen}
+        defaultWidth={width}
+        defaultDepth={depth}
+        onClose={() => setSizeConfigIsOpen(false)}
+        onSave={(width, depth) => ChangeSize(width, depth)}
+      />
+      <ResultDialog
         seats={result}
         open={resultIsOpen}
         onCloseClick={() => {
