@@ -53,7 +53,8 @@ fn main() {
                 let _ = window.emit("change_size", "change_size".to_string());
             },
             "save" => {
-                println!("save");
+                let window = event.window();
+                let _ = window.emit("save", "save".to_string());
             },
             _ => {}
         })

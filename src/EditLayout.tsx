@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
+import { save, open } from "@tauri-apps/api/dialog";
+import { writeTextFile, readTextFile } from "@tauri-apps/api/fs";
+
 import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
 import SeatCard from "./components/SeatCard";
 import ResultDialog from "./components/ResultDialog";
@@ -121,7 +124,14 @@ function EditLayout() {
   useEffect(() => {
     listen("change_size", (_) => {
       setSizeConfigIsOpen(true);
-    })
+    });
+
+    listen("save", async (_) => {
+      const path = await save({ defaultPath: "seats.json" });
+      if (path) {
+        writeTextFile(path, JSON.stringify(seats));
+      }
+    });
   });
 
   function toggleDrawer() {
