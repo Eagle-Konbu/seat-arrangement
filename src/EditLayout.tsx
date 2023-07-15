@@ -68,9 +68,9 @@ function EditLayout() {
       setDepth(newDepth);
 
       const seats = [];
-      for (let i = 0; i < depth; i++) {
+      for (let i = 0; i < newDepth; i++) {
         const row = [];
-        for (let j = 0; j < width; j++) {
+        for (let j = 0; j < newWidth; j++) {
           row.push(null);
         }
         seats.push(row);
@@ -159,15 +159,17 @@ function EditLayout() {
         </Grid>
       );
     }
-    return elements;
+    return (
+      <Grid container spacing={2} columns={props.width}>
+        {elements}
+      </Grid>
+    );
   };
 
   return (
     <Box padding={1}>
       <Stack spacing={2}>
-        <Grid container spacing={2} columns={width}>
-          <Seats width={width} depth={depth} seats={seats} />
-        </Grid>
+        <Seats width={width} depth={depth} seats={seats} />
         <Button fullWidth variant="contained" onClick={solve}>席替え実行</Button>
       </Stack>
 
