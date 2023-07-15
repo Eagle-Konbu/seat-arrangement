@@ -1,19 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { useSearchParams } from "react-router-dom";
+import { listen } from "@tauri-apps/api/event";
 import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
 import SeatCard from "./components/SeatCard";
+import ResultDialog from "./components/ResultDialog";
 
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import { Dna } from "react-loader-spinner";
 
 import type { Student } from "./types/Student";
+import type { ExecutionResult } from "./types/ExecutionResult";
+import SizeConfigDialog from "./components/SizeConfigDialog";
 
 function EditLayout() {
-  const [searchParams, _] = useSearchParams();
-
-  const width = Number(searchParams.get("width"));
-  const depth = Number(searchParams.get("depth"));
+  const [width, setWidth] = useState(5);
+  const [depth, setDepth] = useState(5);
 
   const [drawerIsOpen, setDrawerIsOpen] = useState(false);
   const [backdropIsOpen, setBackdropIsOpen] = useState(false);
@@ -34,6 +35,9 @@ function EditLayout() {
   const [nameInputHelperText, setNameInputHelperText] = useState("");
   const [idInputHelperText, setIdInputHelperText] = useState("");
 
+  const [sizeConfigIsOpen, setSizeConfigIsOpen] = useState(false);
+  const [resultIsOpen, setResultIsOpen] = useState(false);
+
   const [seats, setSeats] = useState<(Student | null)[][]>(() => {
     const seats = [];
     for (let i = 0; i < depth; i++) {
@@ -44,6 +48,42 @@ function EditLayout() {
       seats.push(row);
     }
     return seats;
+  });
+
+  const [result, setResults] = useState<(Student | null)[][]>(() => {
+    const seats = [];
+    for (let i = 0; i < depth; i++) {
+      const row = [];
+      for (let j = 0; j < width; j++) {
+        row.push(null);
+      }
+      seats.push(row);
+    }
+    return seats;
+  });
+
+  async function ChangeSize(newWidth: number, newDepth: number) {
+    if (await window.confirm("既に入力された情報はリセットされます。よろしいですか？")) {
+      setWidth(newWidth);
+      setDepth(newDepth);
+
+      const seats = [];
+      for (let i = 0; i < newDepth; i++) {
+        const row = [];
+        for (let j = 0; j < newWidth; j++) {
+          row.push(null);
+        }
+        seats.push(row);
+      }
+      setSeats(seats);
+      setSizeConfigIsOpen(false);
+    }
+  }
+
+  useEffect(() => {
+    listen("change_size", (_) => {
+      setSizeConfigIsOpen(true);
+    })
   });
 
   function toggleDrawer() {
@@ -69,10 +109,10 @@ function EditLayout() {
   function solve() {
     setBackdropIsOpen(true);
     invoke("solve", { currentSeatAssignment: seats })
-      .then((result) => {
-        invoke("open_result_window", { result }).catch((err) => {
-          window.alert(err);
-        });
+      .then((res) => {
+        const executionResult = res as ExecutionResult;
+        setResults(executionResult.new_seat_assignment);
+        setResultIsOpen(true);
       })
       .catch((err) => {
         window.alert(err);
@@ -82,48 +122,52 @@ function EditLayout() {
       });
   }
 
+  const Seats = (props: { width: number, depth: number, seats: (Student | null)[][] }) => {
+    const elements = [];
+    for (let i = 0; i < props.width * props.depth; i++) {
+      let x = i % props.width;
+      let y = Math.floor(i / props.width);
+      elements.push(
+        <Grid item xs={1}>
+          <SeatCard
+            student={props.seats[y][x]}
+            onClick={() => {
+              setEditedPosition([x, y]);
+              if (props.seats[y][x] !== null) {
+                setIdValue(props.seats[y][x]!.id);
+                setNameValue(props.seats[y][x]!.name);
+                setGenderValue(props.seats[y][x]!.gender);
+                setAcademicAbilityValue(props.seats[y][x]!.academic_ability);
+                setExerciseAbilityValue(props.seats[y][x]!.exercise_ability);
+                setLeadershipAbilityValue(props.seats[y][x]!.leadership_ability);
+                setNeedsAssistanceValue(props.seats[y][x]!.needs_assistance);
+              } else {
+                setIdValue(0);
+                setNameValue("");
+                setGenderValue("Male");
+                setAcademicAbilityValue(3);
+                setExerciseAbilityValue(3);
+                setLeadershipAbilityValue(3);
+                setNeedsAssistanceValue(false);
+              }
+
+              toggleDrawer();
+            }}
+          />
+        </Grid>
+      );
+    }
+    return (
+      <Grid container spacing={2} columns={props.width}>
+        {elements}
+      </Grid>
+    );
+  };
+
   return (
     <Box padding={1}>
       <Stack spacing={2}>
-        <Grid container spacing={2} columns={width}>
-          {(() => {
-            const elements = [];
-            for (let i = 0; i < width * depth; i++) {
-              let x = i % width;
-              let y = Math.floor(i / width);
-              elements.push(
-                <Grid item xs={1}>
-                  <SeatCard
-                    student={seats[y][x]}
-                    onClick={() => {
-                      setEditedPosition([x, y]);
-                      if (seats[y][x] !== null) {
-                        setIdValue(seats[y][x]!.id);
-                        setNameValue(seats[y][x]!.name);
-                        setGenderValue(seats[y][x]!.gender);
-                        setAcademicAbilityValue(seats[y][x]!.academic_ability);
-                        setExerciseAbilityValue(seats[y][x]!.exercise_ability);
-                        setLeadershipAbilityValue(seats[y][x]!.leadership_ability);
-                        setNeedsAssistanceValue(seats[y][x]!.needs_assistance);
-                      } else {
-                        setIdValue(0);
-                        setNameValue("");
-                        setGenderValue("Male");
-                        setAcademicAbilityValue(3);
-                        setExerciseAbilityValue(3);
-                        setLeadershipAbilityValue(3);
-                        setNeedsAssistanceValue(false);
-                      }
-
-                      toggleDrawer();
-                    }}
-                  />
-                </Grid>
-              );
-            }
-            return elements;
-          })()}
-        </Grid>
+        <Seats width={width} depth={depth} seats={seats} />
         <Button fullWidth variant="contained" onClick={solve}>席替え実行</Button>
       </Stack>
 
@@ -236,7 +280,7 @@ function EditLayout() {
                 }
 
                 const studentIds = seats.flat().map((student) => student?.id).filter((id) => id !== null) as number[];
-                if (studentIds.includes(idValue)) {
+                if (studentIds.includes(idValue) && idValue !== seats[editedPosition[1]][editedPosition[0]]?.id) {
                   setIdInputIsError(true);
                   setIdInputHelperText("番号が重複しています。");
                   canBeSaved = false;
@@ -263,6 +307,21 @@ function EditLayout() {
           width={80}
         />
       </Backdrop>
+
+      <SizeConfigDialog
+        open={sizeConfigIsOpen}
+        defaultWidth={width}
+        defaultDepth={depth}
+        onClose={() => setSizeConfigIsOpen(false)}
+        onSave={(width, depth) => ChangeSize(width, depth)}
+      />
+      <ResultDialog
+        seats={result}
+        open={resultIsOpen}
+        onCloseClick={() => {
+          setResultIsOpen(false);
+        }}
+      />
     </Box>
   );
 }
