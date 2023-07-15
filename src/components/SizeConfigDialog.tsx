@@ -9,6 +9,8 @@ function SizeConfigDialog(props: { open: boolean, defaultWidth: number, defaultD
     <Dialog
       open={props.open}
       onClose={props.onClose}
+      fullWidth={true}
+      maxWidth="sm"
     >
       <DialogTitle>サイズ設定</DialogTitle>
       <DialogContent>
@@ -21,7 +23,6 @@ function SizeConfigDialog(props: { open: boolean, defaultWidth: number, defaultD
               min={1}
               max={10}
               marks
-              valueLabelDisplay="auto"
               onChange={(_, v) => setDepth(v as number)}
             />
           </Stack>
@@ -33,8 +34,7 @@ function SizeConfigDialog(props: { open: boolean, defaultWidth: number, defaultD
               step={1}
               min={1}
               max={10}
-              marks
-              valueLabelDisplay="auto"
+              marks={Array(10).fill(0).map((_, i) => ({ value: i + 1, label: (i + 1).toString() }))}
               onChange={(_, v) => setWidth(v as number)}
             />
           </Stack>

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { useSearchParams } from "react-router-dom";
+import { listen } from "@tauri-apps/api/event";
 import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
 import SeatCard from "./components/SeatCard";
 import ResultDialog from "./components/ResultDialog";
@@ -63,10 +63,9 @@ function EditLayout() {
   });
 
   async function ChangeSize(newWidth: number, newDepth: number) {
-    if (!await window.confirm("既に入力された情報はリセットされます。よろしいですか？")) {
+    if (await window.confirm("既に入力された情報はリセットされます。よろしいですか？")) {
       setWidth(newWidth);
       setDepth(newDepth);
-      setSizeConfigIsOpen(false);
 
       const seats = [];
       for (let i = 0; i < depth; i++) {
@@ -77,8 +76,17 @@ function EditLayout() {
         seats.push(row);
       }
       setSeats(seats);
+      setSizeConfigIsOpen(false);
+
+      window.alert(`サイズを変更しました。${width} x ${depth}`)
     }
   }
+
+  useEffect(() => {
+    listen("change_size", (_) => {
+      setSizeConfigIsOpen(true);
+    })
+  });
 
   function toggleDrawer() {
     setDrawerIsOpen(!drawerIsOpen);
@@ -116,47 +124,49 @@ function EditLayout() {
       });
   }
 
+  const Seats = (props: { width: number, depth: number, seats: (Student | null)[][] }) => {
+    const elements = [];
+    for (let i = 0; i < props.width * props.depth; i++) {
+      let x = i % props.width;
+      let y = Math.floor(i / props.width);
+      elements.push(
+        <Grid item xs={1}>
+          <SeatCard
+            student={props.seats[y][x]}
+            onClick={() => {
+              setEditedPosition([x, y]);
+              if (props.seats[y][x] !== null) {
+                setIdValue(props.seats[y][x]!.id);
+                setNameValue(props.seats[y][x]!.name);
+                setGenderValue(props.seats[y][x]!.gender);
+                setAcademicAbilityValue(props.seats[y][x]!.academic_ability);
+                setExerciseAbilityValue(props.seats[y][x]!.exercise_ability);
+                setLeadershipAbilityValue(props.seats[y][x]!.leadership_ability);
+                setNeedsAssistanceValue(props.seats[y][x]!.needs_assistance);
+              } else {
+                setIdValue(0);
+                setNameValue("");
+                setGenderValue("Male");
+                setAcademicAbilityValue(3);
+                setExerciseAbilityValue(3);
+                setLeadershipAbilityValue(3);
+                setNeedsAssistanceValue(false);
+              }
+
+              toggleDrawer();
+            }}
+          />
+        </Grid>
+      );
+    }
+    return elements;
+  };
+
   return (
     <Box padding={1}>
       <Stack spacing={2}>
         <Grid container spacing={2} columns={width}>
-          {(() => {
-            const elements = [];
-            for (let i = 0; i < width * depth; i++) {
-              let x = i % width;
-              let y = Math.floor(i / width);
-              elements.push(
-                <Grid item xs={1}>
-                  <SeatCard
-                    student={seats[y][x]}
-                    onClick={() => {
-                      setEditedPosition([x, y]);
-                      if (seats[y][x] !== null) {
-                        setIdValue(seats[y][x]!.id);
-                        setNameValue(seats[y][x]!.name);
-                        setGenderValue(seats[y][x]!.gender);
-                        setAcademicAbilityValue(seats[y][x]!.academic_ability);
-                        setExerciseAbilityValue(seats[y][x]!.exercise_ability);
-                        setLeadershipAbilityValue(seats[y][x]!.leadership_ability);
-                        setNeedsAssistanceValue(seats[y][x]!.needs_assistance);
-                      } else {
-                        setIdValue(0);
-                        setNameValue("");
-                        setGenderValue("Male");
-                        setAcademicAbilityValue(3);
-                        setExerciseAbilityValue(3);
-                        setLeadershipAbilityValue(3);
-                        setNeedsAssistanceValue(false);
-                      }
-
-                      toggleDrawer();
-                    }}
-                  />
-                </Grid>
-              );
-            }
-            return elements;
-          })()}
+          <Seats width={width} depth={depth} seats={seats} />
         </Grid>
         <Button fullWidth variant="contained" onClick={solve}>席替え実行</Button>
       </Stack>
