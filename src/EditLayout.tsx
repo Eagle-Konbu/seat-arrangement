@@ -13,6 +13,16 @@ import type { ExecutionResult } from "./types/ExecutionResult";
 import SizeConfigDialog from "./components/SizeConfigDialog";
 
 function EditLayout() {
+  const defaultStudent: Student = {
+    id: 0,
+    name: "",
+    academic_ability: 3,
+    exercise_ability: 3,
+    leadership_ability: 3,
+    needs_assistance: false,
+    gender: "Male"
+  };
+
   const [width, setWidth] = useState(5);
   const [depth, setDepth] = useState(5);
 
@@ -21,13 +31,7 @@ function EditLayout() {
 
   const [editedPosition, setEditedPosition] = useState([-1, -1]);
 
-  const [idValue, setIdValue] = useState(0);
-  const [nameValue, setNameValue] = useState("");
-  const [genderValue, setGenderValue] = useState("Male");
-  const [academicAbilityValue, setAcademicAbilityValue] = useState(3);
-  const [exerciseAbilityValue, setExerciseAbilityValue] = useState(3);
-  const [leadershipAbilityValue, setLeadershipAbilityValue] = useState(3);
-  const [needsAssistanceValue, setNeedsAssistanceValue] = useState(false);
+  const [editedStudent, setEditedStudent] = useState(defaultStudent);
 
   const [nameInputIsError, setNameInputIsError] = useState(false);
   const [idInputIsError, setIdInputIsError] = useState(false);
@@ -94,9 +98,9 @@ function EditLayout() {
     setIdInputIsError(false);
   }
 
-  function setStudent(row: number, col: number, id: number, name: string, academic_ability: number, exercise_ability: number, leadership_ability: number, needs_assistance: boolean, gender: string) {
+  function setStudent(row: number, col: number, student: Student) {
     const newSeats = [...seats];
-    newSeats[row][col] = { id, name, academic_ability, exercise_ability, leadership_ability, needs_assistance, gender };
+    newSeats[row][col] = student;
     setSeats(newSeats);
   }
 
@@ -134,21 +138,9 @@ function EditLayout() {
             onClick={() => {
               setEditedPosition([x, y]);
               if (props.seats[y][x] !== null) {
-                setIdValue(props.seats[y][x]!.id);
-                setNameValue(props.seats[y][x]!.name);
-                setGenderValue(props.seats[y][x]!.gender);
-                setAcademicAbilityValue(props.seats[y][x]!.academic_ability);
-                setExerciseAbilityValue(props.seats[y][x]!.exercise_ability);
-                setLeadershipAbilityValue(props.seats[y][x]!.leadership_ability);
-                setNeedsAssistanceValue(props.seats[y][x]!.needs_assistance);
+                setEditedStudent(props.seats[y][x]!);
               } else {
-                setIdValue(0);
-                setNameValue("");
-                setGenderValue("Male");
-                setAcademicAbilityValue(3);
-                setExerciseAbilityValue(3);
-                setLeadershipAbilityValue(3);
-                setNeedsAssistanceValue(false);
+                setEditedStudent(defaultStudent);
               }
 
               toggleDrawer();
@@ -202,9 +194,9 @@ function EditLayout() {
             type="number"
             margin="normal"
             sx={{ boxShadow: 0 }}
-            value={idValue}
+            value={editedStudent.id}
             onChange={(e) => {
-              setIdValue(Number(e.target.value));
+              setEditedStudent({ ...editedStudent, id: Number(e.target.value) })
               setIdInputIsError(false);
               setIdInputHelperText("");
             }}
@@ -217,9 +209,9 @@ function EditLayout() {
             label="名前"
             margin="normal"
             sx={{ boxShadow: 0 }}
-            value={nameValue}
+            value={editedStudent.name}
             onChange={(e) => {
-              setNameValue(e.target.value);
+              setEditedStudent({ ...editedStudent, name: e.target.value })
               setNameInputIsError(false);
               setNameInputHelperText("");
             }}
@@ -231,8 +223,8 @@ function EditLayout() {
           <InputLabel id="gender-select">性別</InputLabel>
           <Select
             labelId="gender-select"
-            value={genderValue}
-            onChange={(e) => setGenderValue(e.target.value)}
+            value={editedStudent.gender}
+            onChange={(e) => setEditedStudent({ ...editedStudent, gender: e.target.value })}
           >
             <MenuItem value="Male">男</MenuItem>
             <MenuItem value="Female">女</MenuItem>
@@ -241,29 +233,31 @@ function EditLayout() {
 
           <Typography gutterBottom>学力</Typography>
           <Rating
-            value={academicAbilityValue}
-            onChange={(_, v) => setAcademicAbilityValue(v || academicAbilityValue)}
+            value={editedStudent.academic_ability}
+            onChange={(_, v) => {
+              setEditedStudent({ ...editedStudent, academic_ability: v || editedStudent.academic_ability });
+            }}
           />
           <Divider />
 
           <Typography gutterBottom>運動能力</Typography>
           <Rating
-            value={exerciseAbilityValue}
-            onChange={(_, v) => setExerciseAbilityValue(v || exerciseAbilityValue)}
+            value={editedStudent.exercise_ability}
+            onChange={(_, v) => setEditedStudent({ ...editedStudent, exercise_ability: v || editedStudent.exercise_ability })}
           />
           <Divider />
 
           <Typography gutterBottom>リーダーシップ</Typography>
           <Rating
-            value={leadershipAbilityValue}
-            onChange={(_, v) => setLeadershipAbilityValue(v || leadershipAbilityValue)}
+            value={editedStudent.leadership_ability}
+            onChange={(_, v) => setEditedStudent({ ...editedStudent, leadership_ability: v || editedStudent.leadership_ability })}
           />
           <Divider />
 
           <Typography gutterBottom>要支援</Typography>
           <Checkbox
-            checked={needsAssistanceValue}
-            onChange={(e) => setNeedsAssistanceValue(e.target.checked)}
+            checked={editedStudent.needs_assistance}
+            onChange={(e) => setEditedStudent({ ...editedStudent, needs_assistance: e.target.checked })}
           />
           <Divider />
 
@@ -273,21 +267,21 @@ function EditLayout() {
               variant="contained"
               onClick={() => {
                 let canBeSaved = true;
-                if (nameValue === "") {
+                if (editedStudent.name === "") {
                   setNameInputIsError(true);
                   setNameInputHelperText("名前を入力してください。");
                   canBeSaved = false;
                 }
 
                 const studentIds = seats.flat().map((student) => student?.id).filter((id) => id !== null) as number[];
-                if (studentIds.includes(idValue) && idValue !== seats[editedPosition[1]][editedPosition[0]]?.id) {
+                if (studentIds.includes(editedStudent.id) && editedStudent.id !== seats[editedPosition[1]][editedPosition[0]]?.id) {
                   setIdInputIsError(true);
                   setIdInputHelperText("番号が重複しています。");
                   canBeSaved = false;
                 }
 
                 if (canBeSaved) {
-                  setStudent(editedPosition[1], editedPosition[0], idValue, nameValue, academicAbilityValue, exerciseAbilityValue, leadershipAbilityValue, needsAssistanceValue, genderValue);
+                  setStudent(editedPosition[1], editedPosition[0], editedStudent);
                   toggleDrawer();
                 }
               }}
