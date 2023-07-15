@@ -66,23 +66,57 @@ function EditLayout() {
     return seats;
   });
 
-  async function ChangeSize(newWidth: number, newDepth: number) {
-    if (await window.confirm("既に入力された情報はリセットされます。よろしいですか？")) {
+  async function changeSize(newWidth: number, newDepth: number) {
+    const compressSeats = (seats: (Student | null)[][]) => {
+      const rowCompressed = seats.filter((row) => row.some((student) => student !== null));
+      if (rowCompressed.length === 0) {
+        return [[null]];
+      }
+      let colCompressed = [];
+      for (let i = 0; i < rowCompressed[0].length; i++) {
+        const col = [];
+        for (let j = 0; j < rowCompressed.length; j++) {
+          col.push(rowCompressed[j][i]);
+        }
+        if (col.some((student) => student !== null)) {
+          colCompressed.push(col);
+        }
+      }
+
+      let res = [];
+      for (let i = 0; i < colCompressed[0].length; i++) {
+        const row = [];
+        for (let j = 0; j < colCompressed.length; j++) {
+          row.push(colCompressed[j][i]);
+        }
+        res.push(row);
+      }
+
+      return res;
+    };
+
+    const compressedSeats = compressSeats(seats);
+
+    let canBeChanged = compressedSeats.length <= newDepth && compressedSeats[0].length <= newWidth;
+    if (!canBeChanged) {
+      canBeChanged = await window.confirm("一部の入力情報が削除されます。よろしいですか？");
+    }
+    if (canBeChanged) {
       setWidth(newWidth);
       setDepth(newDepth);
 
-      const seats = [];
+      const seats = compressedSeats;
       for (let i = 0; i < newDepth; i++) {
-        const row = [];
-        for (let j = 0; j < newWidth; j++) {
-          row.push(null);
+        if (seats[i] === undefined) seats.push([]);
+        for (let j = compressedSeats[i].length; j < newWidth; j++) {
+          seats[i].push(null);
         }
-        seats.push(row);
       }
       setSeats(seats);
       setSizeConfigIsOpen(false);
     }
   }
+
 
   useEffect(() => {
     listen("change_size", (_) => {
@@ -307,7 +341,7 @@ function EditLayout() {
         defaultWidth={width}
         defaultDepth={depth}
         onClose={() => setSizeConfigIsOpen(false)}
-        onSave={(width, depth) => ChangeSize(width, depth)}
+        onSave={(width, depth) => changeSize(width, depth)}
       />
       <ResultDialog
         seats={result}
