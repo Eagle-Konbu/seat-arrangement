@@ -127,14 +127,14 @@ function EditLayout() {
     });
 
     listen("save", async (_) => {
-      const path = await save({ defaultPath: "seats.json" });
+      const path = await save({ defaultPath: "seats.json", filters: [{ name: "JSON", extensions: ["json"] }] });
       if (path) {
         writeTextFile(path, JSON.stringify(seats));
       }
     });
 
     listen("open", async (_) => {
-      const path = await open();
+      const path = await open({filters: [{ name: "JSON", extensions: ["json"] }]});
       if (path) {
         const seats = JSON.parse(await readTextFile(String(path))) as (Student | null)[][];
         setSeats(seats);
