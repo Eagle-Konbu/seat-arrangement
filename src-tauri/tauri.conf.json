@@ -23,6 +23,11 @@
       "window": {
         "all": false,
         "close": true
+      },
+      "fs": {
+        "all": false,
+        "readFile": true,
+        "writeFile": true
       }
     },
     "bundle": {
