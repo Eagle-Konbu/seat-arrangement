@@ -132,6 +132,16 @@ function EditLayout() {
         writeTextFile(path, JSON.stringify(seats));
       }
     });
+
+    listen("open", async (_) => {
+      const path = await open();
+      if (path) {
+        const seats = JSON.parse(await readTextFile(String(path))) as (Student | null)[][];
+        setSeats(seats);
+        setWidth(seats[0].length);
+        setDepth(seats.length);
+      }
+    });
   });
 
   function toggleDrawer() {
