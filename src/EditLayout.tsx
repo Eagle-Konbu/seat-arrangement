@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
-import { save, open } from "@tauri-apps/api/dialog";
+import { save, open, confirm, message } from "@tauri-apps/api/dialog";
 import { writeTextFile, readTextFile } from "@tauri-apps/api/fs";
 
 import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
@@ -102,7 +102,7 @@ function EditLayout() {
 
     let canBeChanged = compressedSeats.length <= newDepth && compressedSeats[0].length <= newWidth;
     if (!canBeChanged) {
-      canBeChanged = await window.confirm("一部の入力情報が削除されます。よろしいですか？");
+      canBeChanged = await confirm("一部の入力情報が削除されます。よろしいですか？", { title: "警告", type: "warning" });
     }
     if (canBeChanged) {
       setWidth(newWidth);
@@ -134,7 +134,7 @@ function EditLayout() {
     });
 
     listen("open", async (_) => {
-      const path = await open({filters: [{ name: "JSON", extensions: ["json"] }]});
+      const path = await open({ filters: [{ name: "JSON", extensions: ["json"] }] });
       if (path) {
         const seats = JSON.parse(await readTextFile(String(path))) as (Student | null)[][];
         setSeats(seats);
@@ -142,7 +142,7 @@ function EditLayout() {
         setDepth(seats.length);
       }
     });
-  });
+  }, [seats, width, depth, sizeConfigIsOpen]);
 
   function toggleDrawer() {
     setDrawerIsOpen(!drawerIsOpen);
@@ -173,7 +173,7 @@ function EditLayout() {
         setResultIsOpen(true);
       })
       .catch((err) => {
-        window.alert(err);
+        message(err, { title: "エラー", type: "error" });
       })
       .finally(() => {
         setBackdropIsOpen(false);
@@ -230,7 +230,7 @@ function EditLayout() {
             >
               <IconButton
                 onClick={async () => {
-                  if (await window.confirm("入力情報をリセットします。よろしいですか？")) {
+                  if (await confirm("入力情報をリセットします。よろしいですか？", { title: "警告", type: "warning" })) {
                     resetStudent(editedPosition[1], editedPosition[0]);
                     toggleDrawer();
                   }
