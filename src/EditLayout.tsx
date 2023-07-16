@@ -180,6 +180,13 @@ function EditLayout() {
       });
   }
 
+  async function saveResult() {
+    const path = await save({ defaultPath: "result.json", filters: [{ name: "JSON", extensions: ["json"] }] });
+    if (path) {
+      writeTextFile(path, JSON.stringify(result));
+    }
+  }
+
   const Seats = (props: { width: number, depth: number, seats: (Student | null)[][] }) => {
     const elements = [];
     for (let i = 0; i < props.width * props.depth; i++) {
@@ -369,6 +376,7 @@ function EditLayout() {
         onCloseClick={() => {
           setResultIsOpen(false);
         }}
+        onSave={saveResult}
       />
     </Box>
   );

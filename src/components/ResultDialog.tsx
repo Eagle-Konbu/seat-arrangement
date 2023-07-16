@@ -2,7 +2,7 @@ import { Box, Stack, Grid, Dialog, DialogContent, DialogTitle, DialogActions, Bu
 import { Student } from "../types/Student";
 import SeatCard from "./SeatCard";
 
-function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClose?: () => void, onCloseClick?: () => void }) {
+function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClose?: () => void, onCloseClick?: () => void, onSave?: () => void }) {
 
   const width = props.seats[0].length;
   const depth = props.seats.length;
@@ -42,6 +42,7 @@ function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClo
       </DialogContent>
       <DialogActions>
         <Button onClick={props.onCloseClick} sx={{ boxShadow: 0 }}>閉じる</Button>
+        <Button onClick={props.onSave} sx={{ boxShadow: 0 }}>保存</Button>
       </DialogActions>
     </Dialog>
 
