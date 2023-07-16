@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
+import { save, open, confirm, message } from "@tauri-apps/api/dialog";
+import { writeTextFile, readTextFile } from "@tauri-apps/api/fs";
+
 import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
 import SeatCard from "./components/SeatCard";
 import ResultDialog from "./components/ResultDialog";
@@ -99,7 +102,7 @@ function EditLayout() {
 
     let canBeChanged = compressedSeats.length <= newDepth && compressedSeats[0].length <= newWidth;
     if (!canBeChanged) {
-      canBeChanged = await window.confirm("一部の入力情報が削除されます。よろしいですか？");
+      canBeChanged = await confirm("一部の入力情報が削除されます。よろしいですか？", { title: "警告", type: "warning" });
     }
     if (canBeChanged) {
       setWidth(newWidth);
@@ -121,8 +124,29 @@ function EditLayout() {
   useEffect(() => {
     listen("change_size", (_) => {
       setSizeConfigIsOpen(true);
-    })
-  });
+    });
+
+    listen("save", async (_) => {
+      const path = await save({ defaultPath: "seats.json", filters: [{ name: "JSON", extensions: ["json"] }] });
+      if (path) {
+        writeTextFile(path, JSON.stringify(seats));
+      }
+    });
+
+    listen("open", async (_) => {
+      const path = await open({ filters: [{ name: "JSON", extensions: ["json"] }] });
+      if (path) {
+        try {
+          const seats = JSON.parse(await readTextFile(String(path))) as (Student | null)[][];
+          setSeats(seats);
+          setWidth(seats[0].length);
+          setDepth(seats.length);
+        } catch (err) {
+          await message("ファイルの読み込みに失敗しました。", { title: "エラー", type: "error" });
+        }
+      }
+    });
+  }, [seats, width, depth, sizeConfigIsOpen]);
 
   function toggleDrawer() {
     setDrawerIsOpen(!drawerIsOpen);
@@ -153,11 +177,18 @@ function EditLayout() {
         setResultIsOpen(true);
       })
       .catch((err) => {
-        window.alert(err);
+        message(err, { title: "エラー", type: "error" });
       })
       .finally(() => {
         setBackdropIsOpen(false);
       });
+  }
+
+  async function saveResult() {
+    const path = await save({ defaultPath: "result.json", filters: [{ name: "JSON", extensions: ["json"] }] });
+    if (path) {
+      writeTextFile(path, JSON.stringify(result));
+    }
   }
 
   const Seats = (props: { width: number, depth: number, seats: (Student | null)[][] }) => {
@@ -210,7 +241,7 @@ function EditLayout() {
             >
               <IconButton
                 onClick={async () => {
-                  if (await window.confirm("入力情報をリセットします。よろしいですか？")) {
+                  if (await confirm("入力情報をリセットします。よろしいですか？", { title: "警告", type: "warning" })) {
                     resetStudent(editedPosition[1], editedPosition[0]);
                     toggleDrawer();
                   }
@@ -349,6 +380,7 @@ function EditLayout() {
         onCloseClick={() => {
           setResultIsOpen(false);
         }}
+        onSave={saveResult}
       />
     </Box>
   );

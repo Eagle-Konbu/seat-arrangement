@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use solver::Student;
-use tauri::{AppHandle, CustomMenuItem, Menu, MenuItem, Submenu, Window, WindowBuilder, WindowUrl};
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 struct ExecutionResult {
@@ -35,8 +35,9 @@ fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>) -> Result<Execution
 }
 
 fn main() {
-    let save = CustomMenuItem::new("save".to_string(), "Save");
-    let file = Submenu::new("File", Menu::new().add_item(save));
+    let save = CustomMenuItem::new("save".to_string(), "Save").accelerator("Ctrl+S");
+    let open = CustomMenuItem::new("open".to_string(), "Open").accelerator("Ctrl+O");
+    let file = Submenu::new("File", Menu::new().add_item(save).add_item(open));
 
     let change_size = CustomMenuItem::new("change_size".to_string(), "Change size");
     let edit = Submenu::new("Edit", Menu::new().add_item(change_size));
@@ -53,7 +54,12 @@ fn main() {
                 let _ = window.emit("change_size", "change_size".to_string());
             },
             "save" => {
-                println!("save");
+                let window = event.window();
+                let _ = window.emit("save", "save".to_string());
+            },
+            "open" => {
+                let window = event.window();
+                let _ = window.emit("open", "open".to_string());
             },
             _ => {}
         })
