@@ -136,10 +136,14 @@ function EditLayout() {
     listen("open", async (_) => {
       const path = await open({ filters: [{ name: "JSON", extensions: ["json"] }] });
       if (path) {
-        const seats = JSON.parse(await readTextFile(String(path))) as (Student | null)[][];
-        setSeats(seats);
-        setWidth(seats[0].length);
-        setDepth(seats.length);
+        try {
+          const seats = JSON.parse(await readTextFile(String(path))) as (Student | null)[][];
+          setSeats(seats);
+          setWidth(seats[0].length);
+          setDepth(seats.length);
+        } catch (err) {
+          await message("ファイルの読み込みに失敗しました。", { title: "エラー", type: "error" });
+        }
       }
     });
   }, [seats, width, depth, sizeConfigIsOpen]);
