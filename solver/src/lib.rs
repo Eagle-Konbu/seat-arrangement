@@ -329,7 +329,6 @@ fn eval_func(
         );
 
         let mut group_member_cnts = vec![0; group_cnt];
-        let mut male_female_rate = 0.0;
         for x in 0..width {
             for y in 0..depth {
                 if new[y][x] == !0 {
@@ -417,6 +416,34 @@ fn eval_func(
         std::io::ErrorKind::Other,
         "Something went wrong",
     ))
+}
+
+fn individual_male_rate(new: &SeatAssignment, students: &[Student]) -> Result<Vec<f64>, Error> {
+    let mut res = vec![0.0; students.len()];
+
+    for x in 0..new[0].len() {
+        for y in 0..new.len() {
+            let student_id = new[y][x];
+            let mut adj_genders = vec![students[student_id].gender];
+            for d in DIR {
+                if (x as i32 + d[0]) < 0
+                    || (x as i32 + d[0]) >= new[0].len() as i32
+                    || (y as i32 + d[1]) < 0
+                    || (y as i32 + d[1]) >= new.len() as i32
+                {
+                    continue;
+                }
+
+                let adj_student_id = new[(y as i32 + d[1]) as usize][(x as i32 + d[0]) as usize];
+                adj_genders.push(students[adj_student_id].gender);
+            }
+
+            let male_cnt = adj_genders.iter().filter(|&&g| g == Gender::Male).count();
+            res[student_id] = male_cnt as f64 / adj_genders.len() as f64;
+        }
+    }
+
+    Ok(res)
 }
 
 fn individual_eval_func(
@@ -521,7 +548,7 @@ pub struct Student {
     gender: Gender,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Gender {
     Male,
     Female,
@@ -628,8 +655,6 @@ mod tests {
     fn score_test_simulated_annealing() {
         let mut rng = ChaCha20Rng::seed_from_u64(123);
 
-        let (mut score_mean, mut score_sigma) = (0.0, 0.0);
-
         let mut scores = vec![];
         let mut individual_scores = vec![];
         for _ in 0..100 {
@@ -647,8 +672,7 @@ mod tests {
             individual_scores.push(individual_score_sum as f64 / students.len() as f64);
         }
 
-        score_mean = mean(&scores);
-        score_sigma = standard_deviation(&scores);
+        let (score_mean, score_sigma) = (mean(&scores), standard_deviation(&scores));
 
         println!("Mean: {}", score_mean);
         println!("Sigma: {}", score_sigma);
@@ -657,8 +681,6 @@ mod tests {
 
     #[test]
     fn score_test_beam_search() {
-        let (mut score_mean, mut score_sigma) = (0.0, 0.0);
-
         let mut scores = vec![];
         let mut individual_scores = vec![];
 
@@ -679,8 +701,7 @@ mod tests {
             individual_scores.push(individual_score_sum as f64 / students.len() as f64);
         }
 
-        score_mean = mean(&scores);
-        score_sigma = standard_deviation(&scores);
+        let (score_mean, score_sigma) = (mean(&scores), standard_deviation(&scores));
 
         println!("Mean: {}", score_mean);
         println!("Sigma: {}", score_sigma);
