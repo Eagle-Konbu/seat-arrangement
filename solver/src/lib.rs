@@ -633,7 +633,6 @@ mod tests {
         for _ in 0..100 {
             let (seat_assignment, students) = test_case(&mut rng);
 
-            // let res = solve(&seat_assignment, &students);
             let res = simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2);
             assert!(res.is_ok());
             let individual_score_sum =
@@ -661,8 +660,6 @@ mod tests {
         for _ in 0..100 {
             let (seat_assignment, students) = test_case(&mut rng);
 
-            // let res = solve(&seat_assignment, &students);
-            // let res = simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2);
             let res = beam_search(&seat_assignment, &students, BEAM_WIDTH);
             assert!(res.is_ok());
             let individual_score_sum =
