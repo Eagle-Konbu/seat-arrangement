@@ -285,7 +285,6 @@ const ACADEMIC_WEIGHT: f64 = 1000.0;
 const EXERCISE_WEIGHT: f64 = 1000.0;
 const LEADERSHIP_WEIGHT: f64 = 1000.0;
 const GENDER_WEIGHT: f64 = 1000.0;
-const GROUP_SIZE: usize = 3;
 
 const LOOP_CNT: usize = 200000;
 const T1: f64 = 119.5;
@@ -303,55 +302,57 @@ fn eval_func(
     if let Ok(individual_scores) = individual_eval_func(previous, new, students) {
         let mut score = (individual_scores.iter().sum::<i64>() as f64 / n as f64) as i64;
 
-        let group = (0..depth)
-            .map(|y| {
-                (0..width)
-                    .map(|x| {
-                        x / GROUP_SIZE
-                            + (y / GROUP_SIZE) * (width as f64 / GROUP_SIZE as f64).ceil() as usize
-                    })
-                    .collect::<Vec<usize>>()
-            })
-            .collect::<Vec<Vec<usize>>>();
-        let group_cnt = (width as f64 / GROUP_SIZE as f64).ceil() as usize
-            * (depth as f64 / GROUP_SIZE as f64).ceil() as usize;
-
         let (
             mut adj_academic_means,
             mut adj_exercise_means,
             mut adj_leadership_means,
             mut adj_male_rate,
         ) = (
-            vec![0.0; group_cnt],
-            vec![0.0; group_cnt],
-            vec![0.0; group_cnt],
-            vec![0.0; group_cnt],
+            vec![0.0; students.len()],
+            vec![0.0; students.len()],
+            vec![0.0; students.len()],
+            vec![0.0; students.len()],
         );
 
-        let mut group_member_cnts = vec![0; group_cnt];
         for x in 0..width {
             for y in 0..depth {
-                if new[y][x] == !0 {
-                    continue;
+                let student_id = new[y][x];
+
+                let mut adj_academics = vec![students[student_id].academic_ability];
+                let mut adj_exercises = vec![students[student_id].exercise_ability];
+                let mut adj_leaderships = vec![students[student_id].leadership_ability];
+                let mut adj_genders = vec![students[student_id].gender];
+                for d in DIR {
+                    if (x as i32 + d[0]) < 0
+                        || (x as i32 + d[0]) >= new[0].len() as i32
+                        || (y as i32 + d[1]) < 0
+                        || (y as i32 + d[1]) >= new.len() as i32
+                    {
+                        continue;
+                    }
+
+                    let adj_student_id =
+                        new[(y as i32 + d[1]) as usize][(x as i32 + d[0]) as usize];
+                    if adj_student_id == !0 {
+                        continue;
+                    }
+
+                    adj_academics.push(students[adj_student_id].academic_ability);
+                    adj_exercises.push(students[adj_student_id].exercise_ability);
+                    adj_leaderships.push(students[adj_student_id].leadership_ability);
+                    adj_genders.push(students[adj_student_id].gender);
                 }
 
-                adj_academic_means[group[y][x]] += students[new[y][x]].academic_ability as f64;
-                adj_exercise_means[group[y][x]] += students[new[y][x]].exercise_ability as f64;
-                adj_leadership_means[group[y][x]] += students[new[y][x]].leadership_ability as f64;
-                adj_male_rate[group[y][x]] += if students[new[y][x]].gender == Gender::Male {
-                    1.0
-                } else {
-                    0.0
-                };
+                let male_cnt = adj_genders.iter().filter(|&&g| g == Gender::Male).count();
 
-                group_member_cnts[group[y][x]] += 1;
+                adj_academic_means[student_id] =
+                    adj_academics.iter().sum::<usize>() as f64 / adj_academics.len() as f64;
+                adj_exercise_means[student_id] =
+                    adj_exercises.iter().sum::<usize>() as f64 / adj_exercises.len() as f64;
+                adj_leadership_means[student_id] =
+                    adj_leaderships.iter().sum::<usize>() as f64 / adj_leaderships.len() as f64;
+                adj_male_rate[student_id] = male_cnt as f64 / adj_genders.len() as f64;
             }
-        }
-        for i in 0..group_cnt {
-            adj_academic_means[i] /= group_member_cnts[i] as f64;
-            adj_exercise_means[i] /= group_member_cnts[i] as f64;
-            adj_leadership_means[i] /= group_member_cnts[i] as f64;
-            adj_male_rate[i] /= group_member_cnts[i] as f64;
         }
 
         let (academic_min, academic_max) = (
@@ -416,34 +417,6 @@ fn eval_func(
         std::io::ErrorKind::Other,
         "Something went wrong",
     ))
-}
-
-fn individual_male_rate(new: &SeatAssignment, students: &[Student]) -> Result<Vec<f64>, Error> {
-    let mut res = vec![0.0; students.len()];
-
-    for x in 0..new[0].len() {
-        for y in 0..new.len() {
-            let student_id = new[y][x];
-            let mut adj_genders = vec![students[student_id].gender];
-            for d in DIR {
-                if (x as i32 + d[0]) < 0
-                    || (x as i32 + d[0]) >= new[0].len() as i32
-                    || (y as i32 + d[1]) < 0
-                    || (y as i32 + d[1]) >= new.len() as i32
-                {
-                    continue;
-                }
-
-                let adj_student_id = new[(y as i32 + d[1]) as usize][(x as i32 + d[0]) as usize];
-                adj_genders.push(students[adj_student_id].gender);
-            }
-
-            let male_cnt = adj_genders.iter().filter(|&&g| g == Gender::Male).count();
-            res[student_id] = male_cnt as f64 / adj_genders.len() as f64;
-        }
-    }
-
-    Ok(res)
 }
 
 fn individual_eval_func(
