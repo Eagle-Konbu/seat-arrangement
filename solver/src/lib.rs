@@ -317,6 +317,9 @@ fn eval_func(
         for x in 0..width {
             for y in 0..depth {
                 let student_id = new[y][x];
+                if student_id == !0 {
+                    continue;
+                }
 
                 let mut adj_academics = vec![students[student_id].academic_ability];
                 let mut adj_exercises = vec![students[student_id].exercise_ability];
