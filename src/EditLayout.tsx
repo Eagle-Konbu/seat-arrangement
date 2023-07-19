@@ -13,7 +13,7 @@ import { Dna } from "react-loader-spinner";
 
 import type { Student } from "./types/Student";
 import type { ExecutionResult } from "./types/ExecutionResult";
-import SizeConfigDialog from "./components/SizeConfigDialog";
+import ConfigDialog from "./components/ConfigDialog";
 
 function EditLayout() {
   const defaultStudent: Student = {
@@ -367,7 +367,7 @@ function EditLayout() {
         />
       </Backdrop>
 
-      <SizeConfigDialog
+      <ConfigDialog
         open={sizeConfigIsOpen}
         defaultWidth={width}
         defaultDepth={depth}
