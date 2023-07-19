@@ -13,6 +13,8 @@ import { Dna } from "react-loader-spinner";
 
 import type { Student } from "./types/Student";
 import type { ExecutionResult } from "./types/ExecutionResult";
+import type { WeightConfig } from "./types/WeightConfig";
+
 import ConfigDialog from "./components/ConfigDialog";
 
 function EditLayout() {
@@ -28,6 +30,12 @@ function EditLayout() {
 
   const [width, setWidth] = useState(5);
   const [depth, setDepth] = useState(5);
+  const [weightConfig, setWeightConfig] = useState<WeightConfig>({
+    academic: 1,
+    exercise: 1,
+    leadership: 1,
+    male_rate: 1
+  });
 
   const [drawerIsOpen, setDrawerIsOpen] = useState(false);
   const [backdropIsOpen, setBackdropIsOpen] = useState(false);
@@ -170,7 +178,7 @@ function EditLayout() {
 
   function solve() {
     setBackdropIsOpen(true);
-    invoke("solve", { currentSeatAssignment: seats })
+    invoke("solve", { currentSeatAssignment: seats, weightConfig })
       .then((res) => {
         const executionResult = res as ExecutionResult;
         setResults(executionResult.new_seat_assignment);
@@ -371,8 +379,12 @@ function EditLayout() {
         open={sizeConfigIsOpen}
         defaultWidth={width}
         defaultDepth={depth}
+        defaultWeightConfig={weightConfig}
         onClose={() => setSizeConfigIsOpen(false)}
-        onSave={(width, depth) => changeSize(width, depth)}
+        onSave={(width, depth, newWeightConfig) => {
+          changeSize(width, depth);
+          setWeightConfig(newWeightConfig);
+        }}
       />
       <ResultDialog
         seats={result}

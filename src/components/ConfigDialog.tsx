@@ -5,14 +5,14 @@ import { useState } from "react";
 
 import type { WeightConfig } from "../types/WeightConfig";
 
-function ConfigDialog(props: { open: boolean, defaultWidth: number, defaultDepth: number, onClose?: () => void, onSave?: (width: number, depth: number) => void }) {
+function ConfigDialog(props: { open: boolean, defaultWidth: number, defaultDepth: number, defaultWeightConfig: WeightConfig, onClose?: () => void, onSave?: (width: number, depth: number, weightConfig: WeightConfig) => void }) {
   const [width, setWidth] = useState(props.defaultWidth);
   const [depth, setDepth] = useState(props.defaultDepth);
 
   const [tabValue, setTabValue] = useState("size");
   const [weightConfig, setWeightConfig] = useState<WeightConfig>({
     academic: 1,
-    exersice: 1,
+    exercise: 1,
     leadership: 1,
     male_rate: 1
   });
@@ -32,45 +32,45 @@ function ConfigDialog(props: { open: boolean, defaultWidth: number, defaultDepth
       name: "デフォルト",
       value: {
         academic: 1,
-        exersice: 1,
+        exercise: 1,
         leadership: 1,
-        maleRate: 1
+        male_rate: 1
       }
     },
     {
       name: "学業重視",
       value: {
         academic: 2,
-        exersice: 1,
+        exercise: 1,
         leadership: 1,
-        maleRate: 1
+        male_rate: 1
       }
     },
     {
       name: "運動重視",
       value: {
         academic: 1,
-        exersice: 2,
+        exercise: 2,
         leadership: 1,
-        maleRate: 1
+        male_rate: 1
       }
     },
     {
       name: "リーダーシップ重視",
       value: {
         academic: 1,
-        exersice: 1,
+        exercise: 1,
         leadership: 2,
-        maleRate: 1
+        male_rate: 1
       }
     },
     {
       name: "男女比重視",
       value: {
         academic: 1,
-        exersice: 1,
+        exercise: 1,
         leadership: 1,
-        maleRate: 2
+        male_rate: 2
       }
     }
   ];
@@ -139,7 +139,7 @@ function ConfigDialog(props: { open: boolean, defaultWidth: number, defaultDepth
       <DialogActions>
         <Stack direction="row" spacing={2}>
           <Button variant="outlined" onClick={props.onClose} sx={{ boxShadow: 0 }}>キャンセル</Button>
-          <Button variant="contained" onClick={() => props.onSave?.(width, depth)}>保存</Button>
+          <Button variant="contained" onClick={() => props.onSave?.(width, depth, weightConfig)}>保存</Button>
         </Stack>
       </DialogActions>
     </Dialog>

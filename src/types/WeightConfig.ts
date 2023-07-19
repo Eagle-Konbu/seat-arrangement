@@ -1,6 +1,6 @@
 export type WeightConfig = {
     academic: number,
-    exersice: number,
+    exercise: number,
     leadership: number,
     male_rate: number
 }
