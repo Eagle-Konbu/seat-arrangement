@@ -13,16 +13,26 @@ use rand_chacha::ChaCha20Rng;
 pub fn solve(
     previous: &SeatAssignment,
     students: &[Student],
+    weight_config: &WeightConfig,
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut rng = ChaCha20Rng::seed_from_u64(123);
 
-    simulated_annealing(previous, students, LOOP_CNT, &mut rng, T1, T2)
+    simulated_annealing(
+        previous,
+        students,
+        LOOP_CNT,
+        &mut rng,
+        T1,
+        T2,
+        weight_config,
+    )
 }
 
 fn beam_search(
     previous: &SeatAssignment,
     students: &[Student],
     beam_width: usize,
+    weight_config: &WeightConfig,
 ) -> Result<(SeatAssignment, i64), Error> {
     let (depth, width, n) = (previous.len(), previous[0].len(), students.len());
 
@@ -51,7 +61,7 @@ fn beam_search(
                         let mut new = current_layout.clone();
                         swap_seats(&mut new, (x1, y1), (x2, y2));
 
-                        let score = eval_func(previous, &new, students).unwrap();
+                        let score = eval_func(previous, &new, students, weight_config).unwrap();
 
                         heap.push((score, new));
                     }
@@ -73,7 +83,7 @@ fn beam_search(
         }
 
         let layout = deq.pop_front().unwrap();
-        let score = eval_func(previous, &layout, students).unwrap();
+        let score = eval_func(previous, &layout, students, weight_config).unwrap();
 
         heap.push((score, layout));
     }
@@ -87,6 +97,7 @@ fn beam_search(
 
 pub fn execute(
     current_layout: &[Vec<Option<Student>>],
+    weight_config: &WeightConfig,
 ) -> Result<(Vec<Vec<Option<Student>>>, i64), Error> {
     let check_res = check_input(current_layout);
     if check_res.is_err() {
@@ -98,7 +109,7 @@ pub fn execute(
 
     compress_student_id(&mut students, &mut previous);
 
-    let solve_result = solve(&previous, &students);
+    let solve_result = solve(&previous, &students, weight_config);
 
     if solve_result.is_err() {
         return Err(solve_result.err().unwrap());
@@ -234,9 +245,10 @@ fn simulated_annealing(
     rng: &mut ChaCha20Rng,
     temperture1: f64,
     temperture2: f64,
+    weight_config: &WeightConfig,
 ) -> Result<(SeatAssignment, i64), Error> {
     let mut new = previous.clone();
-    let mut best_score = eval_func(previous, &new, students).unwrap();
+    let mut best_score = eval_func(previous, &new, students, weight_config).unwrap();
 
     let (depth, width) = (previous.len(), previous[0].len());
 
@@ -254,7 +266,7 @@ fn simulated_annealing(
 
         swap_seats(&mut new, pos1, pos2);
 
-        if let Ok(new_score) = eval_func(previous, &new, students) {
+        if let Ok(new_score) = eval_func(previous, &new, students, weight_config) {
             let p = ((new_score - best_score) as f64 / temperture).exp();
             if new_score > best_score || rng.gen_bool(p) {
                 best_score = new_score;
@@ -296,6 +308,7 @@ fn eval_func(
     previous: &SeatAssignment,
     new: &SeatAssignment,
     students: &[Student],
+    weight_config: &WeightConfig,
 ) -> Result<i64, Error> {
     let (depth, width, n) = (previous.len(), previous[0].len(), students.len());
 
@@ -408,10 +421,11 @@ fn eval_func(
                 .unwrap(),
         );
 
-        score += (ACADEMIC_WEIGHT * (academic_min / academic_max)) as i64;
-        score += (EXERCISE_WEIGHT * (exercise_min / exercise_max)) as i64;
-        score += (LEADERSHIP_WEIGHT * (leadership_min / leadership_max)) as i64;
-        score += (GENDER_WEIGHT * (male_rate_min / male_rate_max)) as i64;
+        score += (ACADEMIC_WEIGHT * weight_config.academic * (academic_min / academic_max)) as i64;
+        score += (EXERCISE_WEIGHT * weight_config.exercise * (exercise_min / exercise_max)) as i64;
+        score += (LEADERSHIP_WEIGHT * weight_config.leadership * (leadership_min / leadership_max))
+            as i64;
+        score += (GENDER_WEIGHT * weight_config.male_rate * (male_rate_min / male_rate_max)) as i64;
 
         return Ok(score);
     }
@@ -530,6 +544,14 @@ pub enum Gender {
     Female,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct WeightConfig {
+    academic: f64,
+    exercise: f64,
+    leadership: f64,
+    male_rate: f64,
+}
+
 #[cfg(test)]
 mod tests {
     use rand::seq::SliceRandom;
@@ -613,6 +635,13 @@ mod tests {
             })
             .collect::<Vec<Student>>();
 
+        let weight_config = WeightConfig {
+            academic: 1.0,
+            exercise: 1.0,
+            leadership: 1.0,
+            male_rate: 1.0,
+        };
+
         let mut seat_assignment = vec![vec![!0; 5]; 5];
         for j in 0..24 {
             let (x, y) = (j % 5, j / 5);
@@ -621,7 +650,7 @@ mod tests {
         for i in 0..25 {
             let (x, y) = (i % 5, i / 5);
             swap_seats(&mut seat_assignment, (x, y), (4, 4));
-            let res = solve(&seat_assignment, &students);
+            let res = solve(&seat_assignment, &students, &weight_config);
             assert!(res.is_ok());
             swap_seats(&mut seat_assignment, (x, y), (4, 4));
         }
@@ -631,12 +660,27 @@ mod tests {
     fn score_test_simulated_annealing() {
         let mut rng = ChaCha20Rng::seed_from_u64(123);
 
+        let weight_config = WeightConfig {
+            academic: 1.0,
+            exercise: 1.0,
+            leadership: 1.0,
+            male_rate: 1.0,
+        };
+
         let mut scores = vec![];
         let mut individual_scores = vec![];
         for _ in 0..100 {
             let (seat_assignment, students) = test_case(&mut rng);
 
-            let res = simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2);
+            let res = simulated_annealing(
+                &seat_assignment,
+                &students,
+                LOOP_CNT,
+                &mut rng,
+                T1,
+                T2,
+                &weight_config,
+            );
             assert!(res.is_ok());
             let individual_score_sum =
                 individual_eval_func(&seat_assignment, &res.as_ref().unwrap().0, &students)
@@ -660,10 +704,17 @@ mod tests {
         let mut individual_scores = vec![];
 
         let mut rng = ChaCha20Rng::seed_from_u64(123);
+        let weight_config = WeightConfig {
+            academic: 1.0,
+            exercise: 1.0,
+            leadership: 1.0,
+            male_rate: 1.0,
+        };
+
         for _ in 0..100 {
             let (seat_assignment, students) = test_case(&mut rng);
 
-            let res = beam_search(&seat_assignment, &students, BEAM_WIDTH);
+            let res = beam_search(&seat_assignment, &students, BEAM_WIDTH, &weight_config);
             assert!(res.is_ok());
             let individual_score_sum =
                 individual_eval_func(&seat_assignment, &res.as_ref().unwrap().0, &students)
@@ -685,18 +736,42 @@ mod tests {
     fn bench_simulated_annealing(b: &mut Bencher) {
         let mut rng = ChaCha20Rng::seed_from_u64(123);
 
+        let weight_config = WeightConfig {
+            academic: 1.0,
+            exercise: 1.0,
+            leadership: 1.0,
+            male_rate: 1.0,
+        };
+
         let (seat_assignment, students) = test_case(&mut rng);
 
-        b.iter(|| simulated_annealing(&seat_assignment, &students, LOOP_CNT, &mut rng, T1, T2))
+        b.iter(|| {
+            simulated_annealing(
+                &seat_assignment,
+                &students,
+                LOOP_CNT,
+                &mut rng,
+                T1,
+                T2,
+                &weight_config,
+            )
+        })
     }
 
     #[bench]
     fn bench_beam_search(b: &mut Bencher) {
         let mut rng = ChaCha20Rng::seed_from_u64(123);
 
+        let weight_config = WeightConfig {
+            academic: 1.0,
+            exercise: 1.0,
+            leadership: 1.0,
+            male_rate: 1.0,
+        };
+
         let (seat_assignment, students) = test_case(&mut rng);
 
-        b.iter(|| beam_search(&seat_assignment, &students, BEAM_WIDTH))
+        b.iter(|| beam_search(&seat_assignment, &students, BEAM_WIDTH, &weight_config))
     }
 
     fn test_case(rng: &mut ChaCha20Rng) -> (SeatAssignment, Vec<Student>) {
