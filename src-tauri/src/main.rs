@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use solver::Student;
+use solver::{Student, WeightConfig};
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -11,7 +11,7 @@ struct ExecutionResult {
 }
 
 #[tauri::command]
-fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>) -> Result<ExecutionResult, String> {
+fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>, weight_config: WeightConfig) -> Result<ExecutionResult, String> {
     if current_seat_assignment
         .iter()
         .flatten()
@@ -20,7 +20,7 @@ fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>) -> Result<Execution
         return Err("席が空です。".to_string());
     }
 
-    let solver_res = solver::execute(&current_seat_assignment);
+    let solver_res = solver::execute(&current_seat_assignment, &weight_config);
 
     if solver_res.is_err() {
         return Err(format!("Solver error: {:?}", solver_res.err()));

@@ -14,7 +14,7 @@ function ConfigDialog(props: { open: boolean, defaultWidth: number, defaultDepth
     academic: 1,
     exersice: 1,
     leadership: 1,
-    maleRate: 1
+    male_rate: 1
   });
 
   const [presetId, setPresetId] = useState("0");
