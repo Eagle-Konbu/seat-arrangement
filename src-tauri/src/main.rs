@@ -35,11 +35,11 @@ fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>) -> Result<Execution
 }
 
 fn main() {
-    let save = CustomMenuItem::new("save".to_string(), "Save").accelerator("Ctrl+S");
-    let open = CustomMenuItem::new("open".to_string(), "Open").accelerator("Ctrl+O");
+    let save = CustomMenuItem::new("save".to_string(), "Save").accelerator("Cmd+S");
+    let open = CustomMenuItem::new("open".to_string(), "Open").accelerator("Cmd+O");
     let file = Submenu::new("File", Menu::new().add_item(save).add_item(open));
 
-    let change_size = CustomMenuItem::new("change_size".to_string(), "Change size");
+    let change_size = CustomMenuItem::new("change_size".to_string(), "Settings").accelerator("Cmd+,");
     let edit = Submenu::new("Edit", Menu::new().add_item(change_size));
     let menu = Menu::new()
         .add_native_item(MenuItem::Copy)

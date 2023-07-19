@@ -87,8 +87,8 @@ function ConfigDialog(props: { open: boolean, defaultWidth: number, defaultDepth
         <TabContext value={tabValue}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <TabList onChange={handleTabChange} aria-label="lab API tabs example">
-              <Tab label="Item One" value="size" />
-              <Tab label="Item Two" value="weight" />
+              <Tab label="サイズ" value="size" />
+              <Tab label="重視内容" value="weight" />
             </TabList>
           </Box>
           <Box padding={2}>
