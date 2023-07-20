@@ -26,7 +26,7 @@ pub fn solve(
         hasher.input_str(&seed_base_str);
         let hash_value = hasher.result_str();
 
-        u64::from_str_radix(&hash_value, 16).unwrap()
+        u64::from_str_radix(&hash_value[..8], 16).unwrap()
     };
 
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
