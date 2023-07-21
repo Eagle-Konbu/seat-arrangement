@@ -7,9 +7,9 @@ function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClo
 
   const width = props.seats[0].length;
   const depth = props.seats.length;
-  
+
   const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuOpen = Boolean(menuAnchorEl);
 
   return (
     <Dialog
@@ -46,12 +46,12 @@ function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClo
       </DialogContent>
       <DialogActions>
         <Button onClick={props.onCloseClick} sx={{ boxShadow: 0 }}>閉じる</Button>
-        <Button onClick={() => setMenuOpen(true)} sx={{ boxShadow: 0 }}>保存</Button>
+        <Button onClick={(event: React.MouseEvent<HTMLButtonElement>) => setMenuAnchorEl(event.currentTarget)} sx={{ boxShadow: 0 }}>保存</Button>
         <Menu
           id="file-menu"
           anchorEl={menuAnchorEl}
           open={menuOpen}
-          onClose={() => setMenuOpen(false)}
+          onClose={() => setMenuAnchorEl(null)}
           MenuListProps={{
             'aria-labelledby': 'file-menu',
           }}

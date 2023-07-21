@@ -74,7 +74,7 @@ fn main() {
             },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![solve])
+        .invoke_handler(tauri::generate_handler![solve, gen_pdf_bytes])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
