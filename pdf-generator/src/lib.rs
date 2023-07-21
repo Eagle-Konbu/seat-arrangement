@@ -5,7 +5,7 @@ pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
 
-pub fn gen(seats: Vec<Vec<String>>)-> Vec<u8> {
+pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
     let (seat_width, seat_height) = (seats[0].len(), seats.len());
     let (page_width, page_height) = (297.0, 210.0);
     let outline_margin_length = 15.0;
@@ -57,7 +57,7 @@ pub fn gen(seats: Vec<Vec<String>>)-> Vec<u8> {
         current_layer.add_shape(line);
     }
 
-    doc.save_to_bytes().unwrap()
+    doc.save_to_bytes()
 }
 
 #[cfg(test)]

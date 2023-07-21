@@ -1,11 +1,15 @@
-import { Box, Stack, Grid, Dialog, DialogContent, DialogTitle, DialogActions, Button } from "@mui/material"
+import { Box, Stack, Grid, Dialog, DialogContent, DialogTitle, DialogActions, Button, Menu, MenuItem } from "@mui/material"
 import { Student } from "../types/Student";
 import SeatCard from "./SeatCard";
+import React from "react";
 
-function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClose?: () => void, onCloseClick?: () => void, onSave?: () => void }) {
+function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClose?: () => void, onCloseClick?: () => void, onSave?: () => void, onPdfSave?: () => void }) {
 
   const width = props.seats[0].length;
   const depth = props.seats.length;
+  
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [menuOpen, setMenuOpen] = React.useState(false);
 
   return (
     <Dialog
@@ -42,7 +46,19 @@ function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClo
       </DialogContent>
       <DialogActions>
         <Button onClick={props.onCloseClick} sx={{ boxShadow: 0 }}>閉じる</Button>
-        <Button onClick={props.onSave} sx={{ boxShadow: 0 }}>保存</Button>
+        <Button onClick={() => setMenuOpen(true)} sx={{ boxShadow: 0 }}>保存</Button>
+        <Menu
+          id="file-menu"
+          anchorEl={menuAnchorEl}
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          MenuListProps={{
+            'aria-labelledby': 'file-menu',
+          }}
+        >
+          <MenuItem onClick={props.onSave}>作業ファイル</MenuItem>
+          <MenuItem onClick={props.onPdfSave}>PDF</MenuItem>
+        </Menu>
       </DialogActions>
     </Dialog>
 

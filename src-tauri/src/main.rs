@@ -34,6 +34,17 @@ fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>) -> Result<Execution
     })
 }
 
+#[tauri::command]
+fn gen_pdf_bytes(seat_layout: Vec<Vec<String>>) -> Result<Vec<u8>, String> {
+    let bytes = pdf_generator::gen(seat_layout);
+
+    if bytes.is_err() {
+        return Err(format!("PDF generator error: {:?}", bytes.err()));
+    }
+
+    Ok(bytes.unwrap())
+}
+
 fn main() {
     let save = CustomMenuItem::new("save".to_string(), "Save").accelerator("Ctrl+S");
     let open = CustomMenuItem::new("open".to_string(), "Open").accelerator("Ctrl+O");

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { save, open, confirm, message } from "@tauri-apps/api/dialog";
-import { writeTextFile, readTextFile } from "@tauri-apps/api/fs";
+import { writeTextFile, readTextFile, writeBinaryFile } from "@tauri-apps/api/fs";
 
 import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
 import SeatCard from "./components/SeatCard";
@@ -188,6 +188,16 @@ function EditLayout() {
     const path = await save({ defaultPath: "result.json", filters: [{ name: "JSON", extensions: ["json"] }] });
     if (path) {
       writeTextFile(path, JSON.stringify(result));
+    }
+  }
+
+  async function savePdf() {
+    const seatLayout = seats.map((row) => row.map((student) => student?.name || ""));
+    const bytes = Array.from(await invoke("gen_pdf_bytes", { seatLayout }) as number[]);
+
+    const path = await save({ defaultPath: "result.pdf", filters: [{ name: "PDF", extensions: ["pdf"] }] });
+    if (path) {
+      writeBinaryFile(path, new Uint8Array(bytes));
     }
   }
 
@@ -381,6 +391,7 @@ function EditLayout() {
           setResultIsOpen(false);
         }}
         onSave={saveResult}
+        onPdfSave={savePdf}
       />
     </Box>
   );
