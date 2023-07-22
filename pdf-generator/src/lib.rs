@@ -106,3 +106,36 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
 
     doc.save_to_bytes()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mm2pt() {
+        assert_eq!(mm2pt(Mm(1.0)), Pt(2.83465));
+    }
+
+    #[test]
+    fn test_pt2mm() {
+        assert_eq!(pt2mm(Pt(2.83465)), Mm(1.0));
+    }
+
+    #[test]
+    fn test_text_width() {
+        assert_eq!(text_width("a", Pt(17.0)), pt2mm(Pt(17.0 / 2.0)));
+        assert_eq!(text_width("あ", Pt(17.0)), pt2mm(Pt(17.0)));
+    }
+
+    #[test]
+    fn gen_works_with_no_error() {
+        let seats = vec![
+            vec!["1".to_string(), "2".to_string(), "3".to_string()],
+            vec!["4".to_string(), "5".to_string(), "6".to_string()],
+            vec!["7".to_string(), "8".to_string(), "9".to_string()],
+        ];
+
+        let bytes = gen(seats);
+        assert!(bytes.is_ok());
+    }
+}
