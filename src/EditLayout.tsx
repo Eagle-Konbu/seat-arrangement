@@ -200,6 +200,15 @@ function EditLayout() {
     }
   }
 
+  async function saveCsv() {
+    const csv = result.map((row) => row.map((student) => student?.name || "").join(",")).join("\n");
+
+    const path = await save({ defaultPath: "result.csv", filters: [{ name: "CSV", extensions: ["csv"] }] });
+    if (path) {
+      writeTextFile(path, csv);
+    }
+  }
+
   const Seats = (props: { width: number, depth: number, seats: (Student | null)[][] }) => {
     const elements = [];
     for (let i = 0; i < props.width * props.depth; i++) {
@@ -391,6 +400,7 @@ function EditLayout() {
         }}
         onSave={saveResult}
         onPdfSave={savePdf}
+        onCsvSave={saveCsv}
       />
     </Box>
   );

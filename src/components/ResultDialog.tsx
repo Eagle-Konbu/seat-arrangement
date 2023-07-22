@@ -3,7 +3,7 @@ import { Student } from "../types/Student";
 import SeatCard from "./SeatCard";
 import React from "react";
 
-function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClose?: () => void, onCloseClick?: () => void, onSave?: () => void, onPdfSave?: () => void }) {
+function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClose?: () => void, onCloseClick?: () => void, onSave?: () => void, onPdfSave?: () => void, onCsvSave?: () => void }) {
 
   const width = props.seats[0].length;
   const depth = props.seats.length;
@@ -57,6 +57,7 @@ function ResultDialog(props: { seats: (Student | null)[][], open: boolean, onClo
           }}
         >
           <MenuItem onClick={props.onSave}>作業ファイル</MenuItem>
+          <MenuItem onClick={props.onCsvSave}>CSV</MenuItem>
           <MenuItem onClick={props.onPdfSave}>PDF</MenuItem>
         </Menu>
       </DialogActions>
