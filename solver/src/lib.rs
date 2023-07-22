@@ -10,11 +10,26 @@ use std::{
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
+use crypto::{digest::Digest, sha2::Sha256};
+
 pub fn solve(
     previous: &SeatAssignment,
     students: &[Student],
 ) -> Result<(SeatAssignment, i64), Error> {
-    let mut rng = ChaCha20Rng::seed_from_u64(123);
+    let seed = {
+        let seed_base_str = format!(
+            "{}{}",
+            serde_json::to_string(students).unwrap(),
+            serde_json::to_string(previous).unwrap()
+        );
+        let mut hasher = Sha256::new();
+        hasher.input_str(&seed_base_str);
+        let hash_value = hasher.result_str();
+
+        u64::from_str_radix(&hash_value[..8], 16).unwrap()
+    };
+
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
 
     simulated_annealing(previous, students, LOOP_CNT, &mut rng, T1, T2)
 }
@@ -516,7 +531,7 @@ const DIR: [[i32; 2]; 8] = [
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Student {
     pub id: usize,
-    name: String,
+    pub name: String,
     academic_ability: usize,
     exercise_ability: usize,
     leadership_ability: usize,

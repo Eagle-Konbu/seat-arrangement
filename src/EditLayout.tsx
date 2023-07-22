@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { save, open, confirm, message } from "@tauri-apps/api/dialog";
-import { writeTextFile, readTextFile } from "@tauri-apps/api/fs";
+import { writeTextFile, readTextFile, writeBinaryFile } from "@tauri-apps/api/fs";
 
 import { Box, Drawer, Grid, Stack, TextField, Divider, Typography, InputLabel, Select, MenuItem, Checkbox, Button, IconButton, Tooltip, Rating, Backdrop } from "@mui/material";
 import SeatCard from "./components/SeatCard";
@@ -188,6 +188,24 @@ function EditLayout() {
     const path = await save({ defaultPath: "result.json", filters: [{ name: "JSON", extensions: ["json"] }] });
     if (path) {
       writeTextFile(path, JSON.stringify(result));
+    }
+  }
+
+  async function savePdf() {
+    const bytes = Array.from(await invoke("gen_pdf_bytes", { seatAssignment: result }) as number[]);
+
+    const path = await save({ defaultPath: "result.pdf", filters: [{ name: "PDF", extensions: ["pdf"] }] });
+    if (path) {
+      writeBinaryFile(path, new Uint8Array(bytes));
+    }
+  }
+
+  async function saveCsv() {
+    const csv = result.map((row) => row.map((student) => student?.name || "").join(",")).join("\n");
+
+    const path = await save({ defaultPath: "result.csv", filters: [{ name: "CSV", extensions: ["csv"] }] });
+    if (path) {
+      writeTextFile(path, csv);
     }
   }
 
@@ -381,6 +399,8 @@ function EditLayout() {
           setResultIsOpen(false);
         }}
         onSave={saveResult}
+        onPdfSave={savePdf}
+        onCsvSave={saveCsv}
       />
     </Box>
   );
