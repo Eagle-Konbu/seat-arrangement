@@ -1,7 +1,7 @@
 use std::fs::File;
 
 use itertools::Itertools;
-use printpdf::{Font, Line, Mm, PdfDocument, Point, Pt, BuiltinFont};
+use printpdf::{BuiltinFont, Font, Line, Mm, PdfDocument, Point, Pt};
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
@@ -13,6 +13,19 @@ fn mm2pt(mm: Mm) -> Pt {
 
 fn pt2mm(pt: Pt) -> Mm {
     Mm(pt.0 / 2.83465)
+}
+
+fn text_width(text: &str, font_size: Pt) -> Pt {
+    let mut res = 0.0;
+    for c in text.chars() {
+        if c.is_ascii() {
+            res += font_size.0 * 0.5;
+        } else {
+            res += font_size.0;
+        }
+    }
+
+    Pt(res)
 }
 
 pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
@@ -34,7 +47,7 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
     let current_layer = doc.get_page(page1).get_layer(layer1);
 
     let font = doc.add_builtin_font(BuiltinFont::Helvetica).unwrap();
-    
+
     for (j, i) in (0..seat_width).cartesian_product(0..seat_height) {
         let left_upper = Point {
             x: mm2pt(Mm(
@@ -72,11 +85,15 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
 
         current_layer.add_shape(line);
 
+        let text_x =
+            left_upper.x + mm2pt(Mm(rect_width / 2.0)) - text_width(&seats[i][j], Pt(17.0)) / 2.0;
+        let text_y = left_upper.y + mm2pt(Mm(rect_height / 2.0)) - Pt(17.0) / 2.0;
+
         current_layer.use_text(
             &seats[i][j],
             17.0,
-            pt2mm(left_upper.x),
-            pt2mm(left_upper.y + left_lower.y) / 2.0,
+            pt2mm(text_x),
+            pt2mm(text_y),
             &font,
         );
     }
