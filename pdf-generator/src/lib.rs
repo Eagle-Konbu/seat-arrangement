@@ -52,7 +52,7 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
     for (j, i) in (0..seat_width).cartesian_product(0..seat_height) {
         let name = &seats[seat_height - i - 1][j];
 
-        let left_upper = Point {
+        let left_lower = Point {
             x: mm2pt(Mm(
                 outline_margin_length + (rect_width + seat_margin_length) * j as f64
             )),
@@ -60,25 +60,25 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
                 outline_margin_length + (rect_height + seat_margin_length) * i as f64
             )),
         };
-        let left_lower = Point {
-            x: left_upper.x,
-            y: left_upper.y + mm2pt(Mm(rect_height)),
-        };
-        let right_upper = Point {
-            x: left_upper.x + mm2pt(Mm(rect_width)),
-            y: left_upper.y,
+        let left_upper = Point {
+            x: left_lower.x,
+            y: left_lower.y + mm2pt(Mm(rect_height)),
         };
         let right_lower = Point {
-            x: left_upper.x + mm2pt(Mm(rect_width)),
-            y: left_upper.y + mm2pt(Mm(rect_height)),
+            x: left_lower.x + mm2pt(Mm(rect_width)),
+            y: left_lower.y,
+        };
+        let right_upper = Point {
+            x: left_lower.x + mm2pt(Mm(rect_width)),
+            y: left_lower.y + mm2pt(Mm(rect_height)),
         };
 
         let line = Line {
             points: vec![
-                (left_upper, false),
                 (left_lower, false),
-                (right_lower, false),
+                (left_upper, false),
                 (right_upper, false),
+                (right_lower, false),
             ],
             is_closed: true,
             has_fill: false,
@@ -86,13 +86,25 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
             is_clipping_path: false,
         };
 
+        let slash_line = Line {
+            points: vec![(left_lower, false), (right_upper, false)],
+            is_closed: false,
+            has_fill: false,
+            has_stroke: true,
+            is_clipping_path: false,
+        };
+
         current_layer.add_shape(line);
 
-        let text_x =
-            left_upper.x + mm2pt(Mm(rect_width / 2.0)) - text_width(name, Pt(17.0)) / 2.0;
-        let text_y = left_upper.y + mm2pt(Mm(rect_height / 2.0)) - Pt(17.0) / 2.0;
+        if name == "" {
+            current_layer.add_shape(slash_line);
+        } else {
+            let text_x =
+                left_lower.x + mm2pt(Mm(rect_width / 2.0)) - text_width(name, Pt(17.0)) / 2.0;
+            let text_y = left_lower.y + mm2pt(Mm(rect_height / 2.0)) - Pt(17.0) / 2.0;
 
-        current_layer.use_text(name, 17.0, pt2mm(text_x), pt2mm(text_y), &font);
+            current_layer.use_text(name, 17.0, pt2mm(text_x), pt2mm(text_y), &font);
+        }
     }
 
     doc.save_to_bytes()
