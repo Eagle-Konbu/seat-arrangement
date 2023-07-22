@@ -1,7 +1,5 @@
-use std::fs::File;
-
 use itertools::Itertools;
-use printpdf::{BuiltinFont, Font, Line, Mm, PdfDocument, Point, Pt};
+use printpdf::{Line, Mm, PdfDocument, Point, Pt};
 
 const TTF_FILE: &[u8] = include_bytes!("../assets/fonts/ipaexg.ttf");
 
@@ -52,6 +50,8 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
     let font = doc.add_external_font(cursor).unwrap();
 
     for (j, i) in (0..seat_width).cartesian_product(0..seat_height) {
+        let name = &seats[seat_height - i - 1][j];
+
         let left_upper = Point {
             x: mm2pt(Mm(
                 outline_margin_length + (rect_width + seat_margin_length) * j as f64
@@ -89,16 +89,10 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
         current_layer.add_shape(line);
 
         let text_x =
-            left_upper.x + mm2pt(Mm(rect_width / 2.0)) - text_width(&seats[i][j], Pt(17.0)) / 2.0;
+            left_upper.x + mm2pt(Mm(rect_width / 2.0)) - text_width(name, Pt(17.0)) / 2.0;
         let text_y = left_upper.y + mm2pt(Mm(rect_height / 2.0)) - Pt(17.0) / 2.0;
 
-        current_layer.use_text(
-            &seats[i][j],
-            17.0,
-            pt2mm(text_x),
-            pt2mm(text_y),
-            &font,
-        );
+        current_layer.use_text(name, 17.0, pt2mm(text_x), pt2mm(text_y), &font);
     }
 
     doc.save_to_bytes()
