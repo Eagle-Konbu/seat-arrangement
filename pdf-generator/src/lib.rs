@@ -1,5 +1,7 @@
+use std::fs::File;
+
 use itertools::Itertools;
-use printpdf::{Line, Mm, PdfDocument, Point, Pt};
+use printpdf::{Font, Line, Mm, PdfDocument, Point, Pt, BuiltinFont};
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
@@ -7,6 +9,10 @@ pub fn add(left: usize, right: usize) -> usize {
 
 fn mm2pt(mm: Mm) -> Pt {
     Pt(mm.0 * 2.83465)
+}
+
+fn pt2mm(pt: Pt) -> Mm {
+    Mm(pt.0 / 2.83465)
 }
 
 pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
@@ -27,6 +33,8 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
 
     let current_layer = doc.get_page(page1).get_layer(layer1);
 
+    let font = doc.add_builtin_font(BuiltinFont::Helvetica).unwrap();
+    
     for (j, i) in (0..seat_width).cartesian_product(0..seat_height) {
         let left_upper = Point {
             x: mm2pt(Mm(
@@ -63,6 +71,14 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
         };
 
         current_layer.add_shape(line);
+
+        current_layer.use_text(
+            &seats[i][j],
+            17.0,
+            pt2mm(left_upper.x),
+            pt2mm(left_upper.y + left_lower.y) / 2.0,
+            &font,
+        );
     }
 
     doc.save_to_bytes()
