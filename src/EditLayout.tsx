@@ -192,7 +192,7 @@ function EditLayout() {
   }
 
   async function savePdf() {
-    const seatLayout = seats.map((row) => row.map((student) => student?.name || ""));
+    const seatLayout = result.map((row) => row.map((student) => student?.name || ""));
     const bytes = Array.from(await invoke("gen_pdf_bytes", { seatLayout }) as number[]);
 
     const path = await save({ defaultPath: "result.pdf", filters: [{ name: "PDF", extensions: ["pdf"] }] });
