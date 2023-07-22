@@ -3,10 +3,6 @@ use printpdf::{Line, Mm, PdfDocument, Point, Pt};
 
 const TTF_FILE: &[u8] = include_bytes!("../assets/fonts/ipaexg.ttf");
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
 fn mm2pt(mm: Mm) -> Pt {
     Pt(mm.0 * 2.83465)
 }
@@ -15,7 +11,7 @@ fn pt2mm(pt: Pt) -> Mm {
     Mm(pt.0 / 2.83465)
 }
 
-fn text_width(text: &str, font_size: Pt) -> Pt {
+fn text_width(text: &str, font_size: Pt) -> Mm {
     let mut res = 0.0;
     for c in text.chars() {
         if c.is_ascii() {
@@ -25,7 +21,7 @@ fn text_width(text: &str, font_size: Pt) -> Pt {
         }
     }
 
-    Pt(res)
+    Mm(res / 2.83465)
 }
 
 pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
@@ -96,27 +92,17 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
 
         current_layer.add_shape(line);
 
-        if name == "" {
+        if name.is_empty() {
             current_layer.add_shape(slash_line);
         } else {
-            let text_x =
-                left_lower.x + mm2pt(Mm(rect_width / 2.0)) - text_width(name, Pt(17.0)) / 2.0;
-            let text_y = left_lower.y + mm2pt(Mm(rect_height / 2.0)) - Pt(17.0) / 2.0;
+            let (text_x, text_y) = (
+                pt2mm(left_lower.x) + Mm(rect_width / 2.0) - text_width(name, Pt(17.0)) / 2.0,
+                pt2mm(left_lower.y) + Mm(rect_height / 2.0) - pt2mm(Pt(17.0)) / 2.0,
+            );
 
-            current_layer.use_text(name, 17.0, pt2mm(text_x), pt2mm(text_y), &font);
+            current_layer.use_text(name, 17.0, text_x, text_y, &font);
         }
     }
 
     doc.save_to_bytes()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
 }
