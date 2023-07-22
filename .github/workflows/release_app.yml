@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  solver-test:
     name: Run Solver Tests
     runs-on: ubuntu-latest
     steps:
@@ -20,6 +20,19 @@ jobs:
       - name: Run tests
         run: cargo test --release --manifest-path solver/Cargo.toml
 
+  pdf-generator-test:
+    name: Run PDF Generator Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Run tests
+        run: cargo test --release --manifest-path pdf-generator/Cargo.toml
+
   release:
     permissions:
       contents: write
@@ -28,7 +41,7 @@ jobs:
       matrix:
         platform: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.platform }}
-    needs: test
+    needs: [solver-test, pdf-generator-test]
 
     steps:
       - name: Checkout repository
