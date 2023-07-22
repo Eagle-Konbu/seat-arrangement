@@ -3,6 +3,8 @@ use std::fs::File;
 use itertools::Itertools;
 use printpdf::{BuiltinFont, Font, Line, Mm, PdfDocument, Point, Pt};
 
+const TTF_FILE: &[u8] = include_bytes!("../assets/fonts/ipaexg.ttf");
+
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
@@ -46,7 +48,8 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
 
     let current_layer = doc.get_page(page1).get_layer(layer1);
 
-    let font = doc.add_builtin_font(BuiltinFont::Helvetica).unwrap();
+    let cursor = std::io::Cursor::new(TTF_FILE);
+    let font = doc.add_external_font(cursor).unwrap();
 
     for (j, i) in (0..seat_width).cartesian_product(0..seat_height) {
         let left_upper = Point {
