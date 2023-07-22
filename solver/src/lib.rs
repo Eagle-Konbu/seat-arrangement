@@ -531,7 +531,7 @@ const DIR: [[i32; 2]; 8] = [
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Student {
     pub id: usize,
-    name: String,
+    pub name: String,
     academic_ability: usize,
     exercise_ability: usize,
     leadership_ability: usize,

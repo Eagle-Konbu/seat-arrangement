@@ -35,8 +35,23 @@ fn solve(current_seat_assignment: Vec<Vec<Option<Student>>>) -> Result<Execution
 }
 
 #[tauri::command]
-fn gen_pdf_bytes(seat_layout: Vec<Vec<String>>) -> Result<Vec<u8>, String> {
-    let bytes = pdf_generator::gen(seat_layout);
+fn gen_pdf_bytes(seat_assignment: Vec<Vec<Option<Student>>>) -> Result<Vec<u8>, String> {
+    let seats = seat_assignment
+        .iter()
+        .map(|row| {
+            row.iter()
+                .map(|seat| {
+                    if let Some(student) = seat {
+                        format!("{}. {}", student.id, &student.name)
+                    } else {
+                        "".to_string()
+                    }
+                })
+                .collect::<Vec<String>>()
+        })
+        .collect::<Vec<Vec<String>>>();
+
+    let bytes = pdf_generator::gen(seats);
 
     if bytes.is_err() {
         return Err(format!("PDF generator error: {:?}", bytes.err()));
@@ -63,15 +78,15 @@ fn main() {
             "change_size" => {
                 let window = event.window();
                 let _ = window.emit("change_size", "change_size".to_string());
-            },
+            }
             "save" => {
                 let window = event.window();
                 let _ = window.emit("save", "save".to_string());
-            },
+            }
             "open" => {
                 let window = event.window();
                 let _ = window.emit("open", "open".to_string());
-            },
+            }
             _ => {}
         })
         .invoke_handler(tauri::generate_handler![solve, gen_pdf_bytes])
