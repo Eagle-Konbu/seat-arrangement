@@ -510,8 +510,9 @@ fn individual_eval_func(
 
     let mut prev_adj_distance_means = vec![0.0; n];
     for i in 0..n {
+        let mut sum = 0.0;
         let (x_prev, y_prev) = before_after_positions[i].0;
-        let mut prev_adj_student_ids = vec![];
+        let mut prev_adj_cnt = 0;
         for d in DIR {
             let (x, y) = ((x_prev as i32 + d[0]), (y_prev as i32 + d[1]));
             if x < 0 || x >= width as i32 || y < 0 || y >= depth as i32 {
@@ -519,18 +520,15 @@ fn individual_eval_func(
             }
             let adj_student_id = previous[y as usize][x as usize];
             if adj_student_id != !0 {
-                prev_adj_student_ids.push(adj_student_id);
+                let (x1, y1) = before_after_positions[adj_student_id].0;
+                let (x2, y2) = before_after_positions[adj_student_id].1;
+
+                sum += ((x1 as i32 - x2 as i32).abs() + (y1 as i32 - y2 as i32).abs()) as f64;
+                prev_adj_cnt += 1;
             }
         }
 
-        let (x1, y1) = before_after_positions[i].1;
-
-        let mut sum = 0.0;
-        for j in 0..prev_adj_student_ids.len() {
-            let (x2, y2) = before_after_positions[prev_adj_student_ids[j]].0;
-            sum += ((x1 as i32 - x2 as i32).abs() + (y1 as i32 - y2 as i32).abs()) as f64;
-        }
-        prev_adj_distance_means[i] = sum / prev_adj_student_ids.len() as f64;
+        prev_adj_distance_means[i] = sum / prev_adj_cnt as f64;
     }
 
     // distance between blackboard and student
