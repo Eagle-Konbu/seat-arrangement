@@ -2,7 +2,7 @@
 extern crate test;
 
 use std::{
-    collections::{BinaryHeap, HashSet, VecDeque},
+    collections::{hash_map::DefaultHasher, BinaryHeap, HashSet, VecDeque},
     io::Error,
     vec,
 };
@@ -10,7 +10,7 @@ use std::{
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
-use crypto::{digest::Digest, sha2::Sha256};
+use std::hash::{Hash, Hasher};
 
 pub fn solve(
     previous: &SeatAssignment,
@@ -22,11 +22,10 @@ pub fn solve(
             serde_json::to_string(students).unwrap(),
             serde_json::to_string(previous).unwrap()
         );
-        let mut hasher = Sha256::new();
-        hasher.input_str(&seed_base_str);
-        let hash_value = hasher.result_str();
 
-        u64::from_str_radix(&hash_value[..8], 16).unwrap()
+        let mut s = DefaultHasher::new();
+        seed_base_str.hash(&mut s);
+        s.finish()
     };
 
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
