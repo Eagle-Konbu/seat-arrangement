@@ -520,7 +520,7 @@ fn individual_eval_func(
             }
             let adj_student_id = previous[y as usize][x as usize];
             if adj_student_id != !0 {
-                let (x1, y1) = before_after_positions[adj_student_id].0;
+                let (x1, y1) = before_after_positions[i].1;
                 let (x2, y2) = before_after_positions[adj_student_id].1;
 
                 sum += ((x1 as i32 - x2 as i32).abs() + (y1 as i32 - y2 as i32).abs()) as f64;
