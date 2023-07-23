@@ -321,11 +321,13 @@ fn eval_func(
             mut adj_exercise_means,
             mut adj_leadership_means,
             mut adj_male_rate,
+            mut adj_cnt,
         ) = (
             vec![vec![0.0; width]; depth],
             vec![vec![0.0; width]; depth],
             vec![vec![0.0; width]; depth],
             vec![vec![0.0; width]; depth],
+            vec![vec![0; width]; depth],
         );
 
         for x in 0..width {
@@ -361,6 +363,7 @@ fn eval_func(
                         } else {
                             0
                         }) as f64;
+                    adj_cnt[i][j] += scaler;
                 }
             }
         }
@@ -371,6 +374,7 @@ fn eval_func(
                 adj_exercise_means[y][x] += adj_exercise_means[y][x - 1];
                 adj_leadership_means[y][x] += adj_leadership_means[y][x - 1];
                 adj_male_rate[y][x] += adj_male_rate[y][x - 1];
+                adj_cnt[y][x] += adj_cnt[y][x - 1];
             }
         }
 
@@ -380,27 +384,16 @@ fn eval_func(
                 adj_exercise_means[y][x] += adj_exercise_means[y - 1][x];
                 adj_leadership_means[y][x] += adj_leadership_means[y - 1][x];
                 adj_male_rate[y][x] += adj_male_rate[y - 1][x];
+                adj_cnt[y][x] += adj_cnt[y - 1][x];
             }
         }
 
         for x in 0..width {
             for y in 0..depth {
-                let adj_cnt = if x == 0 || x == width - 1 {
-                    if y == 0 || y == depth - 1 {
-                        4
-                    } else {
-                        6
-                    }
-                } else if y == 0 || y == depth - 1 {
-                    6
-                } else {
-                    9
-                };
-
-                adj_academic_means[y][x] /= adj_cnt as f64;
-                adj_exercise_means[y][x] /= adj_cnt as f64;
-                adj_leadership_means[y][x] /= adj_cnt as f64;
-                adj_male_rate[y][x] /= adj_cnt as f64;
+                adj_academic_means[y][x] /= adj_cnt[y][x] as f64;
+                adj_exercise_means[y][x] /= adj_cnt[y][x] as f64;
+                adj_leadership_means[y][x] /= adj_cnt[y][x] as f64;
+                adj_male_rate[y][x] /= adj_cnt[y][x] as f64;
             }
         }
 
