@@ -300,7 +300,7 @@ const EXERCISE_WEIGHT: f64 = 1000.0;
 const LEADERSHIP_WEIGHT: f64 = 1000.0;
 const GENDER_WEIGHT: f64 = 1000.0;
 
-const LOOP_CNT: usize = 20000;
+const LOOP_CNT: usize = 200000;
 const T1: f64 = 119.5;
 const T2: f64 = 1.563;
 
@@ -321,11 +321,13 @@ fn eval_func(
             mut adj_exercise_means,
             mut adj_leadership_means,
             mut adj_male_rate,
+            mut adj_cnt,
         ) = (
-            vec![0.0; students.len()],
-            vec![0.0; students.len()],
-            vec![0.0; students.len()],
-            vec![0.0; students.len()],
+            vec![vec![0.0; width]; depth],
+            vec![vec![0.0; width]; depth],
+            vec![vec![0.0; width]; depth],
+            vec![vec![0.0; width]; depth],
+            vec![vec![0; width]; depth],
         );
 
         for x in 0..width {
@@ -335,51 +337,76 @@ fn eval_func(
                     continue;
                 }
 
-                let mut adj_academics = vec![students[student_id].academic_ability];
-                let mut adj_exercises = vec![students[student_id].exercise_ability];
-                let mut adj_leaderships = vec![students[student_id].leadership_ability];
-                let mut adj_genders = vec![students[student_id].gender];
-                for d in DIR {
-                    if (x as i32 + d[0]) < 0
-                        || (x as i32 + d[0]) >= new[0].len() as i32
-                        || (y as i32 + d[1]) < 0
-                        || (y as i32 + d[1]) >= new.len() as i32
-                    {
+                let imos_pos_scaler = [
+                    (x as i64 - 1, y as i64 - 1, 1),
+                    (x as i64 + 2, y as i64 - 1, -1),
+                    (x as i64 - 1, y as i64 + 2, -1),
+                    (x as i64 + 2, y as i64 + 2, 1),
+                ];
+
+                for &(x2, y2, scaler) in imos_pos_scaler.iter() {
+                    let (i, j) = (y2.max(0) as usize, x2.max(0) as usize);
+
+                    if i >= depth || j >= width {
                         continue;
                     }
 
-                    let adj_student_id =
-                        new[(y as i32 + d[1]) as usize][(x as i32 + d[0]) as usize];
-                    if adj_student_id == !0 {
-                        continue;
-                    }
-
-                    adj_academics.push(students[adj_student_id].academic_ability);
-                    adj_exercises.push(students[adj_student_id].exercise_ability);
-                    adj_leaderships.push(students[adj_student_id].leadership_ability);
-                    adj_genders.push(students[adj_student_id].gender);
+                    adj_academic_means[i][j] +=
+                        (scaler * students[student_id].academic_ability as i64) as f64;
+                    adj_exercise_means[i][j] +=
+                        (scaler * students[student_id].exercise_ability as i64) as f64;
+                    adj_leadership_means[i][j] +=
+                        (scaler * students[student_id].leadership_ability as i64) as f64;
+                    adj_male_rate[i][j] += (scaler
+                        * if students[student_id].gender == Gender::Male {
+                            1
+                        } else {
+                            0
+                        }) as f64;
+                    adj_cnt[i][j] += scaler;
                 }
+            }
+        }
 
-                let male_cnt = adj_genders.iter().filter(|&&g| g == Gender::Male).count();
+        for y in 0..depth {
+            for x in 1..width {
+                adj_academic_means[y][x] += adj_academic_means[y][x - 1];
+                adj_exercise_means[y][x] += adj_exercise_means[y][x - 1];
+                adj_leadership_means[y][x] += adj_leadership_means[y][x - 1];
+                adj_male_rate[y][x] += adj_male_rate[y][x - 1];
+                adj_cnt[y][x] += adj_cnt[y][x - 1];
+            }
+        }
 
-                adj_academic_means[student_id] =
-                    adj_academics.iter().sum::<usize>() as f64 / adj_academics.len() as f64;
-                adj_exercise_means[student_id] =
-                    adj_exercises.iter().sum::<usize>() as f64 / adj_exercises.len() as f64;
-                adj_leadership_means[student_id] =
-                    adj_leaderships.iter().sum::<usize>() as f64 / adj_leaderships.len() as f64;
-                adj_male_rate[student_id] = male_cnt as f64 / adj_genders.len() as f64;
+        for x in 0..width {
+            for y in 1..depth {
+                adj_academic_means[y][x] += adj_academic_means[y - 1][x];
+                adj_exercise_means[y][x] += adj_exercise_means[y - 1][x];
+                adj_leadership_means[y][x] += adj_leadership_means[y - 1][x];
+                adj_male_rate[y][x] += adj_male_rate[y - 1][x];
+                adj_cnt[y][x] += adj_cnt[y - 1][x];
+            }
+        }
+
+        for x in 0..width {
+            for y in 0..depth {
+                adj_academic_means[y][x] /= adj_cnt[y][x] as f64;
+                adj_exercise_means[y][x] /= adj_cnt[y][x] as f64;
+                adj_leadership_means[y][x] /= adj_cnt[y][x] as f64;
+                adj_male_rate[y][x] /= adj_cnt[y][x] as f64;
             }
         }
 
         let (academic_min, academic_max) = (
             adj_academic_means
                 .iter()
+                .flatten()
                 .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_academic_means
                 .iter()
+                .flatten()
                 .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
@@ -387,11 +414,13 @@ fn eval_func(
         let (exercise_min, exercise_max) = (
             adj_exercise_means
                 .iter()
+                .flatten()
                 .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_exercise_means
                 .iter()
+                .flatten()
                 .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
@@ -399,11 +428,13 @@ fn eval_func(
         let (leadership_min, leadership_max) = (
             adj_leadership_means
                 .iter()
+                .flatten()
                 .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_leadership_means
                 .iter()
+                .flatten()
                 .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
@@ -412,11 +443,13 @@ fn eval_func(
         let (male_rate_min, male_rate_max) = (
             adj_male_rate
                 .iter()
+                .flatten()
                 .filter(|&&x| !x.is_nan())
                 .min_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
             adj_male_rate
                 .iter()
+                .flatten()
                 .filter(|&&x| !x.is_nan())
                 .max_by(|x, y| x.partial_cmp(y).unwrap())
                 .unwrap(),
@@ -470,8 +503,9 @@ fn individual_eval_func(
 
     let mut prev_adj_distance_means = vec![0.0; n];
     for i in 0..n {
+        let mut sum = 0.0;
         let (x_prev, y_prev) = before_after_positions[i].0;
-        let mut prev_adj_student_ids = vec![];
+        let mut prev_adj_cnt = 0;
         for d in DIR {
             let (x, y) = ((x_prev as i32 + d[0]), (y_prev as i32 + d[1]));
             if x < 0 || x >= width as i32 || y < 0 || y >= depth as i32 {
@@ -479,18 +513,15 @@ fn individual_eval_func(
             }
             let adj_student_id = previous[y as usize][x as usize];
             if adj_student_id != !0 {
-                prev_adj_student_ids.push(adj_student_id);
+                let (x1, y1) = before_after_positions[i].1;
+                let (x2, y2) = before_after_positions[adj_student_id].1;
+
+                sum += ((x1 as i32 - x2 as i32).abs() + (y1 as i32 - y2 as i32).abs()) as f64;
+                prev_adj_cnt += 1;
             }
         }
 
-        let (x1, y1) = before_after_positions[i].1;
-
-        let mut sum = 0.0;
-        for j in 0..prev_adj_student_ids.len() {
-            let (x2, y2) = before_after_positions[prev_adj_student_ids[j]].0;
-            sum += ((x1 as i32 - x2 as i32).abs() + (y1 as i32 - y2 as i32).abs()) as f64;
-        }
-        prev_adj_distance_means[i] = sum / prev_adj_student_ids.len() as f64;
+        prev_adj_distance_means[i] = sum / prev_adj_cnt as f64;
     }
 
     // distance between blackboard and student
