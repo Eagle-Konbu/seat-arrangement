@@ -300,7 +300,7 @@ const EXERCISE_WEIGHT: f64 = 1000.0;
 const LEADERSHIP_WEIGHT: f64 = 1000.0;
 const GENDER_WEIGHT: f64 = 1000.0;
 
-const LOOP_CNT: usize = 20000;
+const LOOP_CNT: usize = 100000;
 const T1: f64 = 119.5;
 const T2: f64 = 1.563;
 
