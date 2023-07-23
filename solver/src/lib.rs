@@ -343,10 +343,12 @@ fn eval_func(
                 ];
 
                 for &(x2, y2, scaler) in imos_pos_scaler.iter() {
-                    let (i, j) = (
-                        y2.min(depth as i64 - 1).max(0) as usize,
-                        x2.min(width as i64 - 1).max(0) as usize,
-                    );
+                    let (i, j) = (y2.max(0) as usize, x2.max(0) as usize);
+
+                    if i >= depth || j >= width {
+                        continue;
+                    }
+
                     adj_academic_means[i][j] +=
                         (scaler * students[student_id].academic_ability as i64) as f64;
                     adj_exercise_means[i][j] +=
