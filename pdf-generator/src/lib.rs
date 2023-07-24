@@ -24,11 +24,30 @@ fn text_width(text: &str, font_size: Pt) -> Mm {
     Mm(res / 2.83465)
 }
 
+fn fit_font_size_to_rect(text: &str, max_font_size: Pt, width: Mm) -> Pt {
+    let mut center = max_font_size.0;
+
+    let mut left = 0.0;
+    let mut right = max_font_size.0;
+    while right - left > 1e-6 {
+        center = (left + right) / 2.0;
+        if text_width(text, Pt(center)) > width {
+            right = center;
+        } else {
+            left = center;
+        }
+    }
+
+    Pt(right)
+}
+
 pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
     let (seat_width, seat_height) = (seats[0].len(), seats.len());
     let (page_width, page_height) = (297.0, 210.0);
+    let max_font_size = 17.0;
     let outline_margin_length = 15.0;
     let seat_margin_length = 5.0;
+    let text_padding_length = 5.0;
 
     let (doc, page1, layer1) =
         PdfDocument::new("Seat Layout", Mm(page_width), Mm(page_height), "main");
@@ -92,15 +111,21 @@ pub fn gen(seats: Vec<Vec<String>>) -> Result<Vec<u8>, printpdf::Error> {
 
         current_layer.add_shape(line);
 
+        let font_size = fit_font_size_to_rect(
+            name,
+            Pt(max_font_size),
+            Mm(rect_width - text_padding_length * 2.0),
+        );
+
         if name.is_empty() {
             current_layer.add_shape(slash_line);
         } else {
             let (text_x, text_y) = (
-                pt2mm(left_lower.x) + Mm(rect_width / 2.0) - text_width(name, Pt(17.0)) / 2.0,
+                pt2mm(left_lower.x) + Mm(rect_width / 2.0) - text_width(name, font_size) / 2.0,
                 pt2mm(left_lower.y) + Mm(rect_height / 2.0) - pt2mm(Pt(17.0)) / 2.0,
             );
 
-            current_layer.use_text(name, 17.0, text_x, text_y, &font);
+            current_layer.use_text(name, font_size.0, text_x, text_y, &font);
         }
     }
 
