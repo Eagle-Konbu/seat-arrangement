@@ -1,5 +1,5 @@
-![Solver Test](https://github.com/Eagle-Konbu/seat-arrangement/actions/workflows/solver_test.yml/badge.svg)
-![PDF Generator Test](https://github.com/Eagle-Konbu/seat-arrangement/actions/workflows/pdf-generator_test.yml/badge.svg)
+[![Solver Test](https://github.com/Eagle-Konbu/seat-arrangement/actions/workflows/solver_test.yml/badge.svg?branch=master)](https://github.com/Eagle-Konbu/seat-arrangement/actions/workflows/solver_test.yml)
+[![PDF Generator Test](https://github.com/Eagle-Konbu/seat-arrangement/actions/workflows/pdf-generator_test.yml/badge.svg?branch=master)](https://github.com/Eagle-Konbu/seat-arrangement/actions/workflows/pdf-generator_test.yml)
 
 # Tauri + React + Typescript
 
