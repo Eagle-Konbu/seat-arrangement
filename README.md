@@ -1,3 +1,6 @@
+![Solver Test](https://github.com/Eagle-Konbu/seat-arrangement/actions/workflows/solver_test.yml/badge.svg)
+![PDF Generator Test](https://github.com/Eagle-Konbu/seat-arrangement/actions/workflows/pdf-generator_test.yml/badge.svg)
+
 # Tauri + React + Typescript
 
 This template should help get you started developing with Tauri, React and Typescript in Vite.
