@@ -5,6 +5,7 @@ mod beam_search;
 mod eval_func;
 mod simulated_annealing;
 pub mod structs;
+mod tabu_search;
 mod utils;
 
 use rand::SeedableRng;
@@ -14,9 +15,9 @@ use std::{
     collections::{hash_map::DefaultHasher, BinaryHeap, HashSet, VecDeque},
     io::Error,
 };
-use utils::{check_input, compress_student_id, separate_input};
 
 use structs::{SeatAssignment, Student};
+use utils::{check_input, compress_student_id, separate_input};
 
 pub fn solve(
     previous: &SeatAssignment,
